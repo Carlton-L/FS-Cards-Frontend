@@ -296,8 +296,21 @@ export function getSubjectBySlug(
   subjects: SubjectData[],
   slug: string
 ): SubjectData | undefined {
+  // First try to match by fsid directly
+  const byFsid = subjects.find((subject) => subject.fsid === slug);
+  if (byFsid) return byFsid;
+
+  // If not found, try matching by converting the slug back to compare with fsid
+  // (in case the URL encoding changed underscores to hyphens or vice versa)
+  const normalizedSlug = slug.replace(/-/g, '_');
+  const byNormalizedFsid = subjects.find(
+    (subject) => subject.fsid === normalizedSlug
+  );
+  if (byNormalizedFsid) return byNormalizedFsid;
+
+  // Finally, try matching by generating a slug from the name
   return subjects.find((subject) => {
-    const expectedSlug = subject.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-    return expectedSlug === slug;
+    const nameSlug = subject.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    return nameSlug === slug;
   });
 }
