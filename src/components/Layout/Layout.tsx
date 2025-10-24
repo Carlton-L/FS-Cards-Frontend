@@ -1,5 +1,5 @@
 // src/components/Layout/Layout.tsx
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import NodeNetworkBackground from '../NodeNetworkBackground';
 import Footer from '../Footer';
@@ -11,10 +11,19 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children, className = '' }) => {
   const location = useLocation();
+  const [isFadedIn, setIsFadedIn] = useState(false);
 
-  // Scroll to top on route change
   useEffect(() => {
+    // Reset to faded out
+    setIsFadedIn(false);
     window.scrollTo(0, 0);
+
+    // Fade in after brief delay
+    const timer = setTimeout(() => {
+      setIsFadedIn(true);
+    }, 50);
+
+    return () => clearTimeout(timer);
   }, [location.pathname]);
 
   return (
@@ -54,6 +63,8 @@ const Layout: React.FC<LayoutProps> = ({ children, className = '' }) => {
           paddingTop: '72px',
           display: 'flex',
           flexDirection: 'column',
+          opacity: isFadedIn ? 1 : 0,
+          transition: 'opacity 0.4s ease-in-out',
         }}
       >
         {children}

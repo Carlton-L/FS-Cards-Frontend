@@ -1,6 +1,7 @@
 // src/components/LoadingScreen/LoadingScreen.tsx
 import React from 'react';
 import NodeNetworkBackground from '../NodeNetworkBackground';
+import Logo from '../Logo';
 
 interface LoadingScreenProps {
   progress?: number;
@@ -55,19 +56,17 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({
           gap: '32px',
         }}
       >
-        <h1
+        <div
           style={{
-            fontSize: '48px',
-            fontWeight: 'bold',
-            textAlign: 'center',
-            background: 'linear-gradient(to right, #8285FF, #0005E9)',
-            backgroundClip: 'text',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
+            marginBottom: '24px',
+            cursor: 'pointer',
+            transition: 'transform 0.2s ease',
+            display: 'flex',
+            justifyContent: 'center',
           }}
         >
-          FS.Cards
-        </h1>
+          <Logo size={80} variant='full' />
+        </div>
 
         <div
           style={{
