@@ -3,6 +3,7 @@ import Papa from 'papaparse';
 
 export interface SubjectData {
   fst: string;
+  fsid: string;
   category: string;
   name: string;
   summary: string;
@@ -164,6 +165,11 @@ function parseCSVRow(row: any): SubjectData | null {
 
   return {
     fst: row.FST || '',
+    fsid: row.ent_fsid
+      ? row.ent_fsid.startsWith('fsid_')
+        ? row.ent_fsid.substring(5)
+        : row.ent_fsid
+      : '',
     category: (row.category || '').toLowerCase(),
     name: row.ent_name,
     summary: row.ent_summary,
@@ -219,7 +225,7 @@ export async function loadSubjectsData(): Promise<SubjectData[]> {
 
         resolve(subjects);
       },
-      error: (error) => {
+      error: (error: Error) => {
         reject(error);
       },
     });

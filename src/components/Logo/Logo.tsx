@@ -7,11 +7,7 @@ interface LogoProps {
   variant?: 'full' | 'simple'; // 'full' for complete version, 'simple' for header
 }
 
-const Logo: React.FC<LogoProps> = ({
-  size = 40,
-  onClick,
-  variant = 'full',
-}) => {
+const Logo: React.FC<LogoProps> = ({ size = 40, variant = 'full' }) => {
   if (variant === 'simple') {
     // Simplified version for header - just the front card
     return (

@@ -6,10 +6,9 @@ import Footer from '../Footer';
 
 interface LayoutProps {
   children: React.ReactNode;
-  className?: string;
 }
 
-const Layout: React.FC<LayoutProps> = ({ children, className = '' }) => {
+const Layout: React.FC<LayoutProps> = ({ children }) => {
   const location = useLocation();
   const [isFadedIn, setIsFadedIn] = useState(false);
 
