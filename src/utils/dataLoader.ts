@@ -39,6 +39,11 @@ const LAB_CODES: { [key: string]: { name: string; description: string } } = {
     description:
       'Artificial intelligence, the distributed web, the metaverse, and quantum computing are all challenging our paradigm of information technology at once.',
   },
+  af: {
+    name: 'Algorithmic Futures',
+    description:
+      'So far, futures and forecasting work has been largely qualitative, subjective, and inaccurate. AI promises to bring more of both rigor and imagination to the field.',
+  },
   bc: {
     name: 'Blockchain & Crypto',
     description:
@@ -73,10 +78,20 @@ const LAB_CODES: { [key: string]: { name: string; description: string } } = {
     description:
       'Alternative proteins, precision fermentation, cellular agriculture, and food innovation.',
   },
-  si: {
-    name: 'Silicon & Materials',
+  is: {
+    name: 'Interspecies Society',
     description:
-      'Advanced materials, nanotechnology, and material science innovations.',
+      'Nature has been excluded from the economy, with disastrous consequences. Breakthroughs in understanding non-human communication, cognition, and commerce will create an interspecies society that’s both prosperous and sustainable, where animals, plants, and the environment are active and equal participants.',
+  },
+  ne: {
+    name: 'neUIro',
+    description:
+      "The next UI is neuro! Neurotech's strong connection between human and tool grants us superpowers. We’re testing technologies like electroencephalography (EEG) and transcranial direct current stimulation (tDCS) for connecting our biological brains with digital devices, and chemical catalysts like galantamine for exploring the creative space of lucid dreams.",
+  },
+  si: {
+    name: 'Silverization',
+    description:
+      "As populations around the world are aging and peaking, we're entering a new era where commerce, culture, and countries can change for the better.",
   },
   sv: {
     name: 'Society & Governance',
@@ -102,13 +117,18 @@ const LAB_CODES: { [key: string]: { name: string; description: string } } = {
     description:
       'Healthcare innovations, medical devices, and diagnostic tools.',
   },
+  rr: {
+    name: 'The Road to Regeneration',
+    description:
+      'The world is realizing that sustainability is insufficient. To restore and rebuild what has been lost, the higher goal of regenerative futures requires new technologies and practices.',
+  },
   sp: {
     name: 'Space Technology',
     description:
       'Aerospace, satellite systems, and space exploration technologies.',
   },
-  tr: {
-    name: 'Transportation',
+  mo: {
+    name: 'Mobility & Transportation',
     description:
       'Autonomous vehicles, mobility solutions, and transportation infrastructure.',
   },
