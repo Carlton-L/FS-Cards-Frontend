@@ -85,41 +85,58 @@ const SearchResultsPage: React.FC = () => {
     <Layout>
       <div
         style={{
-          padding: '60px 20px',
+          padding: 'clamp(20px, 5vw, 60px) 16px',
           maxWidth: '1200px',
           margin: '0 auto',
+          width: '100%',
+          boxSizing: 'border-box',
         }}
       >
+        {/* Header */}
         <div
-          onClick={() => navigate('/')}
           style={{
-            marginBottom: '24px',
-            cursor: 'pointer',
-            transition: 'transform 0.2s ease',
-            display: 'flex',
-            justifyContent: 'center',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'scale(1.05)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'scale(1)';
+            textAlign: 'center',
+            marginBottom: '40px',
           }}
         >
-          <Logo size={80} variant='full' />
+          <div
+            onClick={() => navigate('/')}
+            style={{
+              cursor: 'pointer',
+              transition: 'transform 0.2s ease',
+              display: 'inline-block',
+              maxWidth: '100%',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'scale(1.05)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'scale(1)';
+            }}
+          >
+            <Logo size={800} variant='full' />
+          </div>
         </div>
 
         {/* Search Bar with Button */}
         <div
           style={{
             display: 'flex',
+            flexDirection: window.innerWidth < 640 ? 'column' : 'row',
             justifyContent: 'center',
             marginBottom: '40px',
             gap: '12px',
-            alignItems: 'center',
+            alignItems: 'stretch',
+            width: '100%',
           }}
         >
-          <div onKeyPress={handleKeyPress}>
+          <div
+            onKeyPress={handleKeyPress}
+            style={{
+              flex: '0 1 auto',
+              maxWidth: '100%',
+            }}
+          >
             <SearchBar
               value={searchQuery}
               onChange={setSearchQuery}
@@ -140,7 +157,8 @@ const SearchResultsPage: React.FC = () => {
               cursor: isLoading ? 'not-allowed' : 'pointer',
               transition: 'all 0.3s ease',
               opacity: isLoading ? 0.6 : 1,
-              minWidth: '100px',
+              minWidth: window.innerWidth < 640 ? '100%' : '100px',
+              whiteSpace: 'nowrap',
             }}
             onMouseEnter={(e) => {
               if (!isLoading) {
@@ -158,7 +176,7 @@ const SearchResultsPage: React.FC = () => {
           </button>
         </div>
 
-        {/* Decks Section - Only show when browsing all (no search query) */}
+        {/* Decks Section */}
         {!searchQuery && !isLoading && (
           <div
             style={{
@@ -167,7 +185,7 @@ const SearchResultsPage: React.FC = () => {
           >
             <h2
               style={{
-                fontSize: '24px',
+                fontSize: 'clamp(20px, 5vw, 24px)',
                 fontWeight: 'bold',
                 color: '#FFFFFF',
                 marginBottom: '24px',
@@ -178,7 +196,8 @@ const SearchResultsPage: React.FC = () => {
             <div
               style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                gridTemplateColumns:
+                  'repeat(auto-fit, minmax(min(280px, 100%), 1fr))',
                 gap: '16px',
               }}
             >
@@ -211,7 +230,7 @@ const SearchResultsPage: React.FC = () => {
                 >
                   <h3
                     style={{
-                      fontSize: '18px',
+                      fontSize: 'clamp(16px, 4vw, 18px)',
                       fontWeight: 'bold',
                       color: '#FFFFFF',
                       marginBottom: '8px',
@@ -221,7 +240,7 @@ const SearchResultsPage: React.FC = () => {
                   </h3>
                   <p
                     style={{
-                      fontSize: '14px',
+                      fontSize: 'clamp(12px, 3vw, 14px)',
                       color: '#A7ACB2',
                       lineHeight: '1.5',
                     }}
@@ -283,7 +302,7 @@ const SearchResultsPage: React.FC = () => {
             >
               <h2
                 style={{
-                  fontSize: '20px',
+                  fontSize: 'clamp(18px, 4vw, 20px)',
                   color: '#FFFFFF',
                   fontWeight: '600',
                   marginBottom: '8px',
@@ -293,7 +312,7 @@ const SearchResultsPage: React.FC = () => {
               </h2>
               <p
                 style={{
-                  fontSize: '14px',
+                  fontSize: 'clamp(12px, 3vw, 14px)',
                   color: '#A7ACB2',
                 }}
               >
@@ -306,10 +325,10 @@ const SearchResultsPage: React.FC = () => {
             <div
               style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+                gridTemplateColumns:
+                  'repeat(auto-fit, minmax(min(300px, 100%), 1fr))',
                 gap: '20px',
                 width: '100%',
-                boxSizing: 'border-box',
               }}
             >
               {filteredResults.map((subject) => (
@@ -330,7 +349,7 @@ const SearchResultsPage: React.FC = () => {
               >
                 <p
                   style={{
-                    fontSize: '18px',
+                    fontSize: 'clamp(16px, 4vw, 18px)',
                     color: '#A7ACB2',
                     marginBottom: '24px',
                   }}

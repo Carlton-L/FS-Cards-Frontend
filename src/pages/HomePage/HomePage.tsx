@@ -23,32 +23,36 @@ const HomePage: React.FC = () => {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
+          minHeight: '100vh',
           padding: '40px 20px',
         }}
       >
-        <h1
+        <div
+          onClick={() => navigate('/')}
           style={{
-            fontSize: '48px',
-            fontWeight: 'bold',
-            textAlign: 'center',
             marginBottom: '24px',
-            background: 'linear-gradient(to right, #8285FF, #0005E9)',
-            backgroundClip: 'text',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
+            cursor: 'pointer',
+            transition: 'transform 0.2s ease',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'scale(1.05)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'scale(1)';
           }}
         >
-          <Logo variant='full' size={128} />
-        </h1>
+          <Logo size={120} variant='full' responsive />
+        </div>
 
         <p
           style={{
-            fontSize: '18px',
+            fontSize: 'clamp(14px, 4vw, 18px)',
             color: '#A7ACB2',
             textAlign: 'center',
             maxWidth: '600px',
             lineHeight: '1.6',
             marginBottom: '40px',
+            padding: '0 16px',
           }}
         >
           Explore breakthrough technologies and innovations that will shape our
@@ -58,9 +62,11 @@ const HomePage: React.FC = () => {
         <div
           style={{
             width: '100%',
+            maxWidth: '600px',
             marginBottom: '40px',
             display: 'flex',
             justifyContent: 'center',
+            padding: '0 16px',
           }}
         >
           <SearchBar
@@ -76,6 +82,7 @@ const HomePage: React.FC = () => {
             gap: '16px',
             flexWrap: 'wrap',
             justifyContent: 'center',
+            padding: '0 16px',
           }}
         >
           <button
@@ -87,7 +94,7 @@ const HomePage: React.FC = () => {
               color: '#FFFFFF',
               borderRadius: '12px',
               padding: '12px 24px',
-              fontSize: '16px',
+              fontSize: 'clamp(14px, 3vw, 16px)',
               fontWeight: '500',
               cursor: 'pointer',
               transition: 'all 0.3s ease',
@@ -113,7 +120,7 @@ const HomePage: React.FC = () => {
               color: '#FFFFFF',
               borderRadius: '12px',
               padding: '12px 24px',
-              fontSize: '16px',
+              fontSize: 'clamp(14px, 3vw, 16px)',
               fontWeight: '500',
               cursor: 'pointer',
               transition: 'all 0.3s ease',

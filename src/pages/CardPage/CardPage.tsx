@@ -1,36 +1,20 @@
 // src/pages/CardPage/CardPage.tsx
-import React, { useState } from 'react';
+import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Layout from '../../components/Layout';
 import TradingCard from '../../components/TradingCard';
 import { useData } from '../../contexts/DataContext';
-import { getSubjectBySlug } from '../../utils/dataLoader';
+import { getSubjectBySlug, LAB_CODES } from '../../utils/dataLoader';
 import Logo from '../../components/Logo';
-
-const ExternalLinkIcon: React.FC = () => (
-  <svg
-    width='16'
-    height='16'
-    viewBox='0 0 24 24'
-    fill='none'
-    stroke='currentColor'
-    strokeWidth='2'
-  >
-    <path d='M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6'></path>
-    <polyline points='15 3 21 3 21 9'></polyline>
-    <line x1='10' y1='14' x2='21' y2='3'></line>
-  </svg>
-);
 
 const CardPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
-  const { subjects, labs } = useData();
-  const [showWikiTooltip, setShowWikiTooltip] = useState(false);
+  const { subjects } = useData();
 
-  const subjectData = slug ? getSubjectBySlug(subjects, slug) : undefined;
+  const subject = slug ? getSubjectBySlug(subjects, slug) : undefined;
 
-  if (!subjectData) {
+  if (!subject) {
     return (
       <Layout>
         <div
@@ -41,20 +25,57 @@ const CardPage: React.FC = () => {
             justifyContent: 'center',
             minHeight: '100vh',
             padding: '40px 20px',
+            textAlign: 'center',
+            width: '100%',
           }}
         >
+          {/* Header */}
+          <div
+            style={{
+              textAlign: 'center',
+              marginBottom: '40px',
+            }}
+          >
+            <div
+              onClick={() => navigate('/')}
+              style={{
+                cursor: 'pointer',
+                transition: 'transform 0.2s ease',
+                display: 'inline-block',
+                maxWidth: '100%',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'scale(1.05)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'scale(1)';
+              }}
+            >
+              <Logo size={800} />
+            </div>
+          </div>
+
           <h1
             style={{
-              fontSize: '36px',
+              fontSize: 'clamp(24px, 5vw, 32px)',
               fontWeight: 'bold',
-              color: 'white',
-              marginBottom: '24px',
+              color: '#FFFFFF',
+              marginBottom: '16px',
             }}
           >
             Card Not Found
           </h1>
+          <p
+            style={{
+              fontSize: 'clamp(14px, 3vw, 16px)',
+              color: '#A7ACB2',
+              marginBottom: '32px',
+            }}
+          >
+            The card you're looking for doesn't exist.
+          </p>
           <button
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/search')}
             style={{
               background: 'linear-gradient(145deg, #8285FF, #0005E9)',
               color: 'white',
@@ -66,22 +87,35 @@ const CardPage: React.FC = () => {
               cursor: 'pointer',
               transition: 'all 0.3s ease',
             }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow =
+                '0 6px 16px rgba(130, 133, 255, 0.4)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = 'none';
+            }}
           >
-            Back to Home
+            Browse All Cards
           </button>
         </div>
       </Layout>
     );
   }
 
-  const subject = {
-    id: slug!,
-    name: subjectData.name,
-    description: subjectData.summary,
-    fastUrl: `https://futurity.science/subject/${slug}`, // Fallback URL
+  const cardData = {
+    id: subject.fsid,
+    name: subject.name,
+    description: subject.summary,
+    category: subject.category,
+    fastUrl: subject.fst,
+    labs: subject.labs,
+    inventor: subject.inventor,
+    synonyms: subject.synonyms,
+    wikipediaDefinition: subject.wikipediaDefinition,
+    wikipediaUrl: subject.wikipediaUrl,
   };
-
-  const subjectLabs = labs.filter((lab) => subjectData.labs.includes(lab.id));
 
   return (
     <Layout>
@@ -90,301 +124,111 @@ const CardPage: React.FC = () => {
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          justifyContent: 'center',
-          padding: '40px 20px',
+          padding: 'clamp(40px, 8vw, 80px) 16px',
+          minHeight: '100vh',
+          maxWidth: '100%',
+          boxSizing: 'border-box',
         }}
       >
-        <h1>
-          <div
-            onClick={() => navigate('/')}
-            style={{
-              marginBottom: '24px',
-              cursor: 'pointer',
-              transition: 'transform 0.2s ease',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'scale(1.05)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'scale(1)';
-            }}
-          >
-            <Logo variant='full' />
-          </div>
-        </h1>
-
-        <TradingCard subject={subject} />
+        <div
+          onClick={() => navigate('/')}
+          style={{
+            marginBottom: '24px',
+            cursor: 'pointer',
+            transition: 'transform 0.2s ease',
+            display: 'flex',
+            justifyContent: 'center',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'scale(1.05)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'scale(1)';
+          }}
+        >
+          <Logo size={80} variant='full' responsive />
+        </div>
 
         <div
           style={{
-            marginTop: '40px',
-            maxWidth: '500px',
             width: '100%',
+            maxWidth: '800px',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '24px',
           }}
         >
-          {subjectData.category && (
-            <div
-              style={{
-                background: 'rgba(26, 26, 26, 0.6)',
-                backdropFilter: 'blur(10px)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                borderRadius: '12px',
-                padding: '16px',
-                marginBottom: '12px',
-              }}
-            >
-              <div
-                style={{
-                  fontSize: '12px',
-                  color: '#64ffda',
-                  marginBottom: '4px',
-                  textTransform: 'uppercase',
-                  letterSpacing: '1px',
-                }}
-              >
-                Category
-              </div>
-              <div
-                style={{
-                  fontSize: '16px',
-                  color: '#FFFFFF',
-                  textTransform: 'capitalize',
-                }}
-              >
-                {subjectData.category}
-              </div>
-            </div>
-          )}
+          <TradingCard card={cardData} />
 
-          {subjectData.inventor && (
+          {/* Deck Links Below Card */}
+          {subject.labs && subject.labs.length > 0 && (
             <div
               style={{
-                background: 'rgba(26, 26, 26, 0.6)',
-                backdropFilter: 'blur(10px)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                borderRadius: '12px',
-                padding: '16px',
-                marginBottom: '12px',
+                width: '100%',
+                maxWidth: 'min(600px, calc(100vw - 32px))',
               }}
             >
-              <div
+              <h3
                 style={{
-                  fontSize: '12px',
-                  color: '#64ffda',
-                  marginBottom: '4px',
-                  textTransform: 'uppercase',
-                  letterSpacing: '1px',
-                }}
-              >
-                Inventor/Developer
-              </div>
-              <div
-                style={{
-                  fontSize: '16px',
-                  color: '#FFFFFF',
-                }}
-              >
-                {subjectData.inventor}
-              </div>
-            </div>
-          )}
-
-          {subjectData.synonyms.length > 0 && (
-            <div
-              style={{
-                background: 'rgba(26, 26, 26, 0.6)',
-                backdropFilter: 'blur(10px)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                borderRadius: '12px',
-                padding: '16px',
-                marginBottom: '12px',
-              }}
-            >
-              <div
-                style={{
-                  fontSize: '12px',
-                  color: '#64ffda',
-                  marginBottom: '8px',
-                  textTransform: 'uppercase',
-                  letterSpacing: '1px',
-                }}
-              >
-                Also Known As
-              </div>
-              <div
-                style={{
-                  fontSize: '14px',
+                  fontSize: 'clamp(14px, 3.5vw, 16px)',
                   color: '#A7ACB2',
-                  lineHeight: '1.6',
-                }}
-              >
-                {subjectData.synonyms.join(', ')}
-              </div>
-            </div>
-          )}
-
-          {subjectData.wikipediaUrl && (
-            <div
-              style={{
-                background: 'rgba(26, 26, 26, 0.6)',
-                backdropFilter: 'blur(10px)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                borderRadius: '12px',
-                padding: '16px',
-                marginBottom: '12px',
-                position: 'relative',
-              }}
-            >
-              <div
-                style={{
-                  fontSize: '12px',
-                  color: '#64ffda',
-                  marginBottom: '8px',
                   textTransform: 'uppercase',
                   letterSpacing: '1px',
+                  marginBottom: '12px',
+                  textAlign: 'center',
                 }}
               >
-                Learn More
-              </div>
-              <a
-                href={subjectData.wikipediaUrl}
-                target='_blank'
-                rel='noopener noreferrer'
-                onMouseEnter={() => setShowWikiTooltip(true)}
-                onMouseLeave={() => setShowWikiTooltip(false)}
+                Found in Decks
+              </h3>
+              <div
                 style={{
-                  fontSize: '16px',
-                  color: '#8285FF',
-                  textDecoration: 'none',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  transition: 'color 0.3s ease',
+                  display: 'flex',
+                  gap: '12px',
+                  flexWrap: 'wrap',
+                  justifyContent: 'center',
                 }}
               >
-                <span>Wikipedia Article</span>
-                <ExternalLinkIcon />
-              </a>
-
-              {showWikiTooltip && subjectData.wikipediaDefinition && (
-                <div
-                  style={{
-                    position: 'absolute',
-                    bottom: '100%',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    marginBottom: '8px',
-                    background: 'rgba(17, 17, 17, 0.95)',
-                    backdropFilter: 'blur(10px)',
-                    border: '1px solid rgba(130, 133, 255, 0.3)',
-                    borderRadius: '8px',
-                    padding: '12px 16px',
-                    maxWidth: '400px',
-                    width: 'max-content',
-                    fontSize: '14px',
-                    color: '#FFFFFF',
-                    lineHeight: '1.5',
-                    zIndex: 1000,
-                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)',
-                  }}
-                >
-                  {subjectData.wikipediaDefinition.substring(0, 200)}
-                  {subjectData.wikipediaDefinition.length > 200 && '...'}
-                  <div
-                    style={{
-                      position: 'absolute',
-                      top: '100%',
-                      left: '50%',
-                      transform: 'translateX(-50%)',
-                      width: 0,
-                      height: 0,
-                      borderLeft: '6px solid transparent',
-                      borderRight: '6px solid transparent',
-                      borderTop: '6px solid rgba(130, 133, 255, 0.3)',
-                    }}
-                  />
-                </div>
-              )}
+                {subject.labs.map((labCode) => {
+                  const labInfo = LAB_CODES[labCode];
+                  return (
+                    <button
+                      key={labCode}
+                      onClick={() => navigate(`/deck/${labCode}`)}
+                      style={{
+                        padding: '10px 20px',
+                        background: 'rgba(130, 133, 255, 0.1)',
+                        border: '1px solid rgba(130, 133, 255, 0.3)',
+                        borderRadius: '8px',
+                        fontSize: 'clamp(12px, 3vw, 14px)',
+                        color: '#8285FF',
+                        fontWeight: 'bold',
+                        cursor: 'pointer',
+                        transition: 'all 0.3s ease',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background =
+                          'rgba(130, 133, 255, 0.2)';
+                        e.currentTarget.style.borderColor =
+                          'rgba(130, 133, 255, 0.5)';
+                        e.currentTarget.style.transform = 'translateY(-2px)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background =
+                          'rgba(130, 133, 255, 0.1)';
+                        e.currentTarget.style.borderColor =
+                          'rgba(130, 133, 255, 0.3)';
+                        e.currentTarget.style.transform = 'translateY(0)';
+                      }}
+                    >
+                      {labInfo ? labInfo.name : labCode.toUpperCase()}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           )}
         </div>
-
-        {subjectLabs.length > 0 && (
-          <div
-            style={{
-              marginTop: '20px',
-              maxWidth: '500px',
-              width: '100%',
-            }}
-          >
-            <h3
-              style={{
-                fontSize: '18px',
-                fontWeight: 'bold',
-                color: '#FFFFFF',
-                textAlign: 'center',
-                marginBottom: '20px',
-              }}
-            >
-              Featured in Futurity Labs
-            </h3>
-
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '12px',
-              }}
-            >
-              {subjectLabs.map((lab) => (
-                <div
-                  key={lab.id}
-                  style={{
-                    background: 'rgba(26, 26, 26, 0.6)',
-                    backdropFilter: 'blur(10px)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    borderRadius: '12px',
-                    padding: '16px',
-                    transition: 'all 0.3s ease',
-                    cursor: 'pointer',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background =
-                      'rgba(130, 133, 255, 0.1)';
-                    e.currentTarget.style.borderColor =
-                      'rgba(130, 133, 255, 0.3)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'rgba(26, 26, 26, 0.6)';
-                    e.currentTarget.style.borderColor =
-                      'rgba(255, 255, 255, 0.1)';
-                  }}
-                  onClick={() => navigate(`/deck/${lab.id}`)}
-                >
-                  <div
-                    style={{
-                      fontSize: '16px',
-                      fontWeight: 'bold',
-                      color: '#FFFFFF',
-                      marginBottom: '8px',
-                    }}
-                  >
-                    {lab.name}
-                  </div>
-                  <div
-                    style={{
-                      fontSize: '14px',
-                      color: '#A7ACB2',
-                      lineHeight: '1.5',
-                    }}
-                  >
-                    {lab.description}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
     </Layout>
   );

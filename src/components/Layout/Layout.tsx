@@ -59,7 +59,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           position: 'relative',
           zIndex: 1,
           flex: 1,
-          paddingTop: '72px',
           display: 'flex',
           flexDirection: 'column',
           opacity: isFadedIn ? 1 : 0,

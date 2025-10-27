@@ -28,7 +28,9 @@ const VERSION_KEY = 'fs_cards_data_version';
 const CURRENT_VERSION = '1.0';
 
 // Complete lab codes mapping
-const LAB_CODES: { [key: string]: { name: string; description: string } } = {
+export const LAB_CODES: {
+  [key: string]: { name: string; description: string };
+} = {
   ag: {
     name: 'Agriculture',
     description:

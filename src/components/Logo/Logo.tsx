@@ -4,114 +4,22 @@ import React from 'react';
 interface LogoProps {
   size?: number;
   onClick?: () => void;
-  variant?: 'full' | 'simple'; // 'full' for complete version, 'simple' for header
 }
 
-const Logo: React.FC<LogoProps> = ({ size = 40, variant = 'full' }) => {
-  if (variant === 'simple') {
-    // Simplified version for header - just the front card
-    return (
-      <svg
-        width={size}
-        height={size}
-        viewBox='0 0 266 266'
-        fill='none'
-        xmlns='http://www.w3.org/2000/svg'
-      >
-        <path
-          opacity='0.4'
-          d='M167.483 83.9925L30.509 103.243C24.6899 104.061 20.6356 109.441 21.4534 115.26L33.2998 199.552C34.1176 205.371 39.4979 209.425 45.3171 208.607L182.291 189.357C188.11 188.539 192.164 183.159 191.347 177.34L179.5 93.0482C178.682 87.229 173.302 83.1747 167.483 83.9925Z'
-          stroke='white'
-          stroke-width='1.6'
-        />
-        <path
-          opacity='0.6'
-          d='M184.98 75.1052L46.9974 84.754C41.1354 85.1639 36.7156 90.2482 37.1255 96.1102L43.0632 181.023C43.4731 186.885 48.5575 191.305 54.4195 190.895L192.403 181.246C198.265 180.836 202.684 175.752 202.274 169.89L196.337 84.9771C195.927 79.1151 190.842 74.6953 184.98 75.1052Z'
-          stroke='white'
-          stroke-width='1.6'
-        />
-        <path
-          d='M202.16 66.5H63.84C57.9636 66.5 53.2 71.2637 53.2 77.14V162.26C53.2 168.136 57.9636 172.9 63.84 172.9H202.16C208.036 172.9 212.8 168.136 212.8 162.26V77.14C212.8 71.2637 208.036 66.5 202.16 66.5Z'
-          fill='white'
-          stroke='white'
-          stroke-width='1.6'
-        />
-        <path
-          d='M92.98 127.96C97.3872 127.96 100.96 124.387 100.96 119.98C100.96 115.573 97.3872 112 92.98 112C88.5728 112 85 115.573 85 119.98C85 124.387 88.5728 127.96 92.98 127.96Z'
-          fill='url(#paint0_linear_1644_10)'
-        />
-        <path
-          d='M133 106.4C138.876 106.4 143.64 101.636 143.64 95.76C143.64 89.8837 138.876 85.12 133 85.12C127.124 85.12 122.36 89.8837 122.36 95.76C122.36 101.636 127.124 106.4 133 106.4Z'
-          fill='url(#paint1_linear_1644_10)'
-        />
-        <path
-          d='M171.98 140.96C176.387 140.96 179.96 137.387 179.96 132.98C179.96 128.573 176.387 125 171.98 125C167.573 125 164 128.573 164 132.98C164 137.387 167.573 140.96 171.98 140.96Z'
-          fill='url(#paint2_linear_1644_10)'
-        />
-        <path
-          opacity='0.8'
-          d='M93 120.667L132.5 96L172 133'
-          stroke='url(#paint3_linear_1644_10)'
-          stroke-width='1.2'
-        />
-        <defs>
-          <linearGradient
-            id='paint0_linear_1644_10'
-            x1='85'
-            y1='112'
-            x2='1681'
-            y2='1708'
-            gradientUnits='userSpaceOnUse'
-          >
-            <stop stop-color='#8285FF' />
-            <stop offset='1' stop-color='#0005E9' />
-          </linearGradient>
-          <linearGradient
-            id='paint1_linear_1644_10'
-            x1='122.36'
-            y1='85.12'
-            x2='2250.36'
-            y2='2213.12'
-            gradientUnits='userSpaceOnUse'
-          >
-            <stop stop-color='#8285FF' />
-            <stop offset='1' stop-color='#0005E9' />
-          </linearGradient>
-          <linearGradient
-            id='paint2_linear_1644_10'
-            x1='164'
-            y1='125'
-            x2='1760'
-            y2='1721'
-            gradientUnits='userSpaceOnUse'
-          >
-            <stop stop-color='#8285FF' />
-            <stop offset='1' stop-color='#0005E9' />
-          </linearGradient>
-          <linearGradient
-            id='paint3_linear_1644_10'
-            x1='93'
-            y1='96'
-            x2='2935.34'
-            y2='6164.78'
-            gradientUnits='userSpaceOnUse'
-          >
-            <stop stop-color='#8285FF' />
-            <stop offset='1' stop-color='#0005E9' />
-          </linearGradient>
-        </defs>
-      </svg>
-    );
-  }
-
-  // Full version with card stack for other uses
+const Logo: React.FC<LogoProps> = ({ size = 800, onClick }) => {
   return (
     <svg
-      width='579'
-      height='266'
+      width={800}
+      height='auto'
+      style={{
+        maxWidth: '100%',
+        height: 'auto',
+        cursor: onClick ? 'pointer' : 'default',
+      }}
       viewBox='0 0 579 266'
       fill='none'
       xmlns='http://www.w3.org/2000/svg'
+      onClick={onClick}
     >
       <path
         d='M13.824 94.28V98.76H9.72801V125H3.39201V98.76H1.46031e-05V94.28H3.39201V89.48C3.39201 83.976 5.24801 82.248 11.136 82.248C11.648 82.248 12.544 82.248 13.824 82.312V87.176H12.8C10.56 87.176 9.72801 88.008 9.72801 90.312V94.28H13.824ZM36.1025 94.28V125H29.7025V122.248C27.2065 124.744 25.4145 125.64 22.8545 125.64C18.3745 125.64 15.8145 121.928 15.8145 115.592V94.28H22.2785V113.48C22.2785 118.344 23.1745 120.136 25.7345 120.136C28.4865 120.136 29.7025 118.088 29.7025 113.48V94.28H36.1025ZM51.833 94.28V98.824H47.545V115.4C47.545 119.496 48.057 120.072 51.321 120.008V125H46.777C42.937 125.128 41.465 123.784 41.273 120.008V98.824H38.073V94.28H41.273V85.704H47.545V94.28H51.833ZM74.6025 94.28V125H68.2025V122.248C65.7065 124.744 63.9145 125.64 61.3545 125.64C56.8745 125.64 54.3145 121.928 54.3145 115.592V94.28H60.7785V113.48C60.7785 118.344 61.6745 120.136 64.2345 120.136C66.9865 120.136 68.2025 118.088 68.2025 113.48V94.28H74.6025ZM93.789 93.192V99.976C87.389 99.848 85.341 102.408 85.277 110.92V125H78.877V94.28H85.277V98.76C87.453 94.92 89.245 93.768 93.789 93.192ZM102.716 94.28V125H96.252V94.28H102.716ZM102.716 82.312V88.904H96.252V82.312H102.716ZM118.458 94.28V98.824H114.17V115.4C114.17 119.496 114.682 120.072 117.946 120.008V125H113.402C109.562 125.128 108.09 123.784 107.898 120.008V98.824H104.698V94.28H107.898V85.704H114.17V94.28H118.458ZM143.048 94.28L133.256 128.648C131.4 135.176 130.504 135.944 124.68 135.944H121.544V130.632H122.76C125.576 130.632 126.216 130.12 127.176 127.048L127.816 125L119.24 94.28H126.088L129.096 105.608C129.928 108.872 130.632 112.648 131.272 117.384C131.848 113.16 132.488 109.832 133.192 106.888L136.584 94.28H143.048Z'
@@ -129,19 +37,19 @@ const Logo: React.FC<LogoProps> = ({ size = 40, variant = 'full' }) => {
         opacity='0.4'
         d='M301.123 83.9925L164.149 103.243C158.33 104.061 154.276 109.441 155.093 115.26L166.94 199.552C167.758 205.371 173.138 209.425 178.957 208.607L315.931 189.357C321.75 188.539 325.804 183.159 324.987 177.34L313.14 93.0482C312.322 87.2291 306.942 83.1747 301.123 83.9925Z'
         stroke='white'
-        stroke-width='1.6'
+        strokeWidth='1.6'
       />
       <path
         opacity='0.6'
         d='M318.62 75.1052L180.637 84.7539C174.775 85.1639 170.356 90.2482 170.766 96.1102L176.703 181.023C177.113 186.885 182.197 191.305 188.059 190.895L326.043 181.246C331.905 180.836 336.324 175.752 335.914 169.89L329.977 84.9771C329.567 79.1151 324.482 74.6953 318.62 75.1052Z'
         stroke='white'
-        stroke-width='1.6'
+        strokeWidth='1.6'
       />
       <path
         d='M335.8 66.5H197.48C191.604 66.5 186.84 71.2637 186.84 77.14V162.26C186.84 168.136 191.604 172.9 197.48 172.9H335.8C341.676 172.9 346.44 168.136 346.44 162.26V77.14C346.44 71.2637 341.676 66.5 335.8 66.5Z'
         fill='white'
         stroke='white'
-        stroke-width='1.6'
+        strokeWidth='1.6'
       />
       <path
         d='M226.62 127.96C231.027 127.96 234.6 124.387 234.6 119.98C234.6 115.573 231.027 112 226.62 112C222.213 112 218.64 115.573 218.64 119.98C218.64 124.387 222.213 127.96 226.62 127.96Z'
@@ -159,7 +67,7 @@ const Logo: React.FC<LogoProps> = ({ size = 40, variant = 'full' }) => {
         opacity='0.8'
         d='M226.64 120.667L266.14 96L305.64 133'
         stroke='url(#paint3_linear_1644_36)'
-        stroke-width='1.2'
+        strokeWidth='1.2'
       />
       <defs>
         <linearGradient
@@ -170,8 +78,8 @@ const Logo: React.FC<LogoProps> = ({ size = 40, variant = 'full' }) => {
           y2='1708'
           gradientUnits='userSpaceOnUse'
         >
-          <stop stop-color='#8285FF' />
-          <stop offset='1' stop-color='#0005E9' />
+          <stop stopColor='#8285FF' />
+          <stop offset='1' stopColor='#0005E9' />
         </linearGradient>
         <linearGradient
           id='paint1_linear_1644_36'
@@ -181,8 +89,8 @@ const Logo: React.FC<LogoProps> = ({ size = 40, variant = 'full' }) => {
           y2='2213.12'
           gradientUnits='userSpaceOnUse'
         >
-          <stop stop-color='#8285FF' />
-          <stop offset='1' stop-color='#0005E9' />
+          <stop stopColor='#8285FF' />
+          <stop offset='1' stopColor='#0005E9' />
         </linearGradient>
         <linearGradient
           id='paint2_linear_1644_36'
@@ -192,8 +100,8 @@ const Logo: React.FC<LogoProps> = ({ size = 40, variant = 'full' }) => {
           y2='1721'
           gradientUnits='userSpaceOnUse'
         >
-          <stop stop-color='#8285FF' />
-          <stop offset='1' stop-color='#0005E9' />
+          <stop stopColor='#8285FF' />
+          <stop offset='1' stopColor='#0005E9' />
         </linearGradient>
         <linearGradient
           id='paint3_linear_1644_36'
@@ -203,8 +111,8 @@ const Logo: React.FC<LogoProps> = ({ size = 40, variant = 'full' }) => {
           y2='6164.78'
           gradientUnits='userSpaceOnUse'
         >
-          <stop stop-color='#8285FF' />
-          <stop offset='1' stop-color='#0005E9' />
+          <stop stopColor='#8285FF' />
+          <stop offset='1' stopColor='#0005E9' />
         </linearGradient>
       </defs>
     </svg>

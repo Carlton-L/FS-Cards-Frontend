@@ -1,140 +1,55 @@
 // src/pages/DeckPage/DeckPage.tsx
-import React, { useState } from 'react';
+import React, { useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Layout from '../../components/Layout';
-import DeckStack from '../../components/DeckStack';
+import SearchResultCard from '../../components/TradingCard/SearchResultCard';
 import { useData } from '../../contexts/DataContext';
-import { getSubjectsByLab } from '../../utils/dataLoader';
 import Logo from '../../components/Logo';
-
-const SubjectListItem: React.FC<{
-  subject: { id: string; name: string; description: string; fastUrl: string };
-  onSubjectClick: (subject: {
-    id: string;
-    name: string;
-    description: string;
-    fastUrl: string;
-  }) => void;
-}> = ({ subject, onSubjectClick }) => {
-  const [isHovered, setIsHovered] = useState(false);
-
-  return (
-    <div
-      onClick={() => onSubjectClick(subject)}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        padding: '12px 16px',
-        background: isHovered
-          ? 'rgba(130, 133, 255, 0.1)'
-          : 'rgba(26, 26, 26, 0.6)',
-        backdropFilter: 'blur(10px)',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
-        borderRadius: '8px',
-        cursor: 'pointer',
-        transition: 'all 0.3s ease',
-        marginBottom: '8px',
-      }}
-    >
-      {/* Mini icon */}
-      <div
-        style={{
-          width: '24px',
-          height: '24px',
-          background: 'linear-gradient(145deg, #8285FF, #0005E9)',
-          borderRadius: '4px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginRight: '12px',
-          flexShrink: 0,
-        }}
-      >
-        <svg width='12' height='12' viewBox='0 0 24 24' fill='none'>
-          <path
-            d='M12 2L20.196 7V17L12 22L3.804 17V7L12 2Z'
-            fill='white'
-            stroke='white'
-            strokeWidth='1'
-            strokeLinejoin='round'
-          />
-        </svg>
-      </div>
-
-      {/* Subject info */}
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <h4
-          style={{
-            fontSize: '14px',
-            fontWeight: '600',
-            color: 'white',
-            marginBottom: '2px',
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-          }}
-        >
-          {subject.name}
-        </h4>
-        <p
-          style={{
-            fontSize: '12px',
-            color: '#A7ACB2',
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-          }}
-        >
-          {subject.description}
-        </p>
-      </div>
-
-      {/* Arrow */}
-      <div
-        style={{
-          color: '#64ffda',
-          marginLeft: '12px',
-          opacity: isHovered ? 1 : 0.5,
-          transition: 'opacity 0.3s ease',
-        }}
-      >
-        <svg
-          width='16'
-          height='16'
-          viewBox='0 0 24 24'
-          fill='none'
-          stroke='currentColor'
-          strokeWidth='2'
-        >
-          <path d='m9 18 6-6-6-6' />
-        </svg>
-      </div>
-    </div>
-  );
-};
+import DeckStack from '../../components/DeckStack';
 
 const DeckPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { subjects, labs } = useData();
 
-  // Find the lab/deck by ID
-  const lab = labs.find((l) => l.id === id);
+  const currentLab = useMemo(() => {
+    return labs.find((lab) => lab.id === id);
+  }, [labs, id]);
 
-  // Get subjects for this lab
-  const deckSubjects = id ? getSubjectsByLab(subjects, id) : [];
+  const filteredSubjects = useMemo(() => {
+    if (!id) return [];
+    return subjects
+      .filter((subject) => subject.labs.includes(id))
+      .map((subject) => ({
+        id: subject.fsid,
+        name: subject.name,
+        description: subject.summary,
+        fastUrl: subject.fst,
+      }));
+  }, [subjects, id]);
+
+  const deckSubjects = useMemo(() => {
+    if (!id) return [];
+    return subjects.filter((subject) => subject.labs.includes(id));
+  }, [subjects, id]);
 
   // Convert SubjectData to Subject format for components
   const convertedSubjects = deckSubjects.map((subjectData) => ({
-    id: subjectData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+    id: subjectData.fsid,
     name: subjectData.name,
     description: subjectData.summary,
     fastUrl: subjectData.fst,
   }));
+  const handleCardClick = (subject: {
+    id: string;
+    name: string;
+    description: string;
+    fastUrl: string;
+  }) => {
+    navigate(`/a/${subject.id}`);
+  };
 
-  if (!lab || deckSubjects.length === 0) {
+  if (!currentLab) {
     return (
       <Layout>
         <div
@@ -145,32 +60,47 @@ const DeckPage: React.FC = () => {
             justifyContent: 'center',
             minHeight: '100vh',
             padding: '40px 20px',
+            textAlign: 'center',
           }}
         >
+          <div
+            onClick={() => navigate('/')}
+            style={{
+              marginBottom: '24px',
+              cursor: 'pointer',
+              transition: 'transform 0.2s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'scale(1.05)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'scale(1)';
+            }}
+          >
+            <Logo size={80} variant='full' responsive />
+          </div>
+
           <h1
             style={{
-              fontSize: '36px',
+              fontSize: 'clamp(24px, 5vw, 32px)',
               fontWeight: 'bold',
-              color: 'white',
-              marginBottom: '24px',
+              color: '#FFFFFF',
+              marginBottom: '16px',
             }}
           >
             Deck Not Found
           </h1>
           <p
             style={{
-              fontSize: '16px',
+              fontSize: 'clamp(14px, 3vw, 16px)',
               color: '#A7ACB2',
-              marginBottom: '24px',
-              textAlign: 'center',
+              marginBottom: '32px',
             }}
           >
-            {lab
-              ? 'No subjects found in this deck.'
-              : 'This deck does not exist.'}
+            The deck you're looking for doesn't exist.
           </p>
           <button
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/search')}
             style={{
               background: 'linear-gradient(145deg, #8285FF, #0005E9)',
               color: 'white',
@@ -182,43 +112,32 @@ const DeckPage: React.FC = () => {
               cursor: 'pointer',
               transition: 'all 0.3s ease',
             }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow =
+                '0 6px 16px rgba(130, 133, 255, 0.4)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = 'none';
+            }}
           >
-            Back to Home
+            Browse All Decks
           </button>
         </div>
       </Layout>
     );
   }
 
-  const handlePrintDeck = () => {
-    window.print();
-  };
-
-  const handleCardClick = (subject: {
-    id: string;
-    name: string;
-    description: string;
-    fastUrl: string;
-  }) => {
-    navigate(`/a/${subject.id}`);
-  };
-
-  const handleSubjectClick = (subject: {
-    id: string;
-    name: string;
-    description: string;
-    fastUrl: string;
-  }) => {
-    navigate(`/a/${subject.id}`);
-  };
-
   return (
     <Layout>
       <div
         style={{
-          padding: '40px 20px',
+          padding: 'clamp(40px, 8vw, 80px) 16px',
           maxWidth: '1200px',
           margin: '0 auto',
+          width: '100%',
+          boxSizing: 'border-box',
         }}
       >
         {/* Header */}
@@ -228,194 +147,198 @@ const DeckPage: React.FC = () => {
             marginBottom: '40px',
           }}
         >
-          <h1>
-            <div
-              onClick={() => navigate('/')}
-              style={{
-                marginBottom: '24px',
-                cursor: 'pointer',
-                transition: 'transform 0.2s ease',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'scale(1.05)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'scale(1)';
-              }}
-            >
-              <Logo variant='full' />
-            </div>
+          <div
+            onClick={() => navigate('/')}
+            style={{
+              cursor: 'pointer',
+              transition: 'transform 0.2s ease',
+              display: 'inline-block',
+              maxWidth: '100%',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'scale(1.05)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'scale(1)';
+            }}
+          >
+            <Logo size={800} variant='full' />
+          </div>
+        </div>
+
+        {/* Deck Info */}
+        <div
+          style={{
+            background: 'rgba(26, 26, 26, 0.6)',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: '16px',
+            padding: 'clamp(20px, 5vw, 32px)',
+            marginBottom: '48px',
+            textAlign: 'center',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+        >
+          <h1
+            style={{
+              fontSize: 'clamp(24px, 6vw, 36px)',
+              fontWeight: 'bold',
+              color: '#FFFFFF',
+              marginBottom: '16px',
+            }}
+          >
+            {currentLab.name}
           </h1>
           <p
             style={{
-              fontSize: '14px',
+              fontSize: 'clamp(14px, 3vw, 18px)',
               color: '#A7ACB2',
+              lineHeight: '1.6',
+              maxWidth: '800px',
+              margin: '0 auto',
+              marginBottom: '40px',
             }}
           >
-            Deck Collection
+            {currentLab.description}
           </p>
-        </div>
-
-        {/* Deck Info and Stack - Responsive Grid */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-            gap: '40px',
-            alignItems: 'center',
-            marginBottom: '60px',
-          }}
-        >
-          {/* Deck Info */}
-          <div>
-            <h2
-              style={{
-                fontSize: '32px',
-                fontWeight: 'bold',
-                color: 'white',
-                marginBottom: '16px',
-              }}
-            >
-              {lab.name}
-            </h2>
-            <p
-              style={{
-                fontSize: '16px',
-                color: '#A7ACB2',
-                lineHeight: '1.6',
-                marginBottom: '24px',
-              }}
-            >
-              {lab.description}
-            </p>
-
-            {/* Print Button */}
-            <button
-              onClick={handlePrintDeck}
-              style={{
-                background: 'linear-gradient(145deg, #8285FF, #0005E9)',
-                color: 'white',
-                border: 'none',
-                borderRadius: '12px',
-                padding: '12px 24px',
-                fontSize: '16px',
-                fontWeight: 'bold',
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
-                boxShadow: '0 4px 12px rgba(130, 133, 255, 0.3)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow =
-                  '0 6px 16px rgba(130, 133, 255, 0.4)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow =
-                  '0 4px 12px rgba(130, 133, 255, 0.3)';
-              }}
-            >
-              <svg
-                width='16'
-                height='16'
-                viewBox='0 0 24 24'
-                fill='none'
-                stroke='currentColor'
-                strokeWidth='2'
-              >
-                <polyline points='6,9 6,2 18,2 18,9' />
-                <path d='M6,18H4a2,2,0,0,1-2-2V11a2,2,0,0,1,2-2H20a2,2,0,0,1,2,2v5a2,2,0,0,1-2,2H18' />
-                <polyline points='6,14 18,14 18,22 6,22' />
-              </svg>
-              Print Deck
-            </button>
-          </div>
-
-          {/* Visual Deck Stack - centered for smaller screens */}
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'center',
-            }}
-          >
+          {/* Deck Stack */}
+          {convertedSubjects.length > 0 ? (
             <DeckStack
               subjects={convertedSubjects}
               onCardClick={handleCardClick}
             />
-          </div>
-
-          {/* Stats */}
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'center',
-            }}
-          >
+          ) : (
             <div
               style={{
-                background: 'rgba(26, 26, 26, 0.6)',
-                backdropFilter: 'blur(10px)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                borderRadius: '12px',
-                padding: '20px',
                 textAlign: 'center',
-                minWidth: '150px',
+                padding: '60px 20px',
               }}
             >
-              <div
+              <p
                 style={{
-                  fontSize: '32px',
-                  fontWeight: 'bold',
-                  color: '#64ffda',
-                  marginBottom: '4px',
-                }}
-              >
-                {convertedSubjects.length}
-              </div>
-              <div
-                style={{
-                  fontSize: '14px',
+                  fontSize: 'clamp(16px, 4vw, 18px)',
                   color: '#A7ACB2',
+                  marginBottom: '24px',
                 }}
               >
-                Total Cards
-              </div>
+                No cards found in this deck yet.
+              </p>
+              <button
+                onClick={() => navigate('/search')}
+                style={{
+                  background: 'rgba(26, 26, 26, 0.8)',
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  color: '#FFFFFF',
+                  borderRadius: '12px',
+                  padding: '12px 24px',
+                  fontSize: '16px',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(130, 133, 255, 0.1)';
+                  e.currentTarget.style.borderColor =
+                    'rgba(130, 133, 255, 0.3)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(26, 26, 26, 0.8)';
+                  e.currentTarget.style.borderColor =
+                    'rgba(255, 255, 255, 0.1)';
+                }}
+              >
+                Browse All Cards
+              </button>
             </div>
+          )}
+          <div
+            style={{
+              marginTop: '8px',
+              padding: 'clamp(12px, 3vw, 16px) clamp(20px, 4vw, 24px)',
+              background: 'rgba(130, 133, 255, 0.1)',
+              border: '1px solid rgba(130, 133, 255, 0.3)',
+              borderRadius: '12px',
+              display: 'inline-block',
+            }}
+          >
+            <p
+              style={{
+                fontSize: 'clamp(14px, 3vw, 16px)',
+                color: '#8285FF',
+                fontWeight: 'bold',
+              }}
+            >
+              {filteredSubjects.length} cards in this deck
+            </p>
           </div>
         </div>
 
-        {/* Subject List */}
-        <div>
-          <h3
-            style={{
-              fontSize: '24px',
-              fontWeight: 'bold',
-              color: 'white',
-              marginBottom: '20px',
-            }}
-          >
-            All Cards in Deck
-          </h3>
-
+        {/* Cards Grid */}
+        {filteredSubjects.length > 0 ? (
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-              gap: '0 20px',
+              gridTemplateColumns:
+                'repeat(auto-fit, minmax(min(300px, 100%), 1fr))',
+              gap: '20px',
+              width: '100%',
             }}
           >
-            {convertedSubjects.map((subject) => (
-              <SubjectListItem
+            {filteredSubjects.map((subject) => (
+              <SearchResultCard
                 key={subject.id}
                 subject={subject}
-                onSubjectClick={handleSubjectClick}
+                onCardClick={handleCardClick}
               />
             ))}
           </div>
-        </div>
+        ) : (
+          <div
+            style={{
+              textAlign: 'center',
+              padding: '60px 20px',
+            }}
+          >
+            <p
+              style={{
+                fontSize: 'clamp(16px, 4vw, 18px)',
+                color: '#A7ACB2',
+                marginBottom: '24px',
+              }}
+            >
+              No cards found in this deck yet.
+            </p>
+            <button
+              onClick={() => navigate('/search')}
+              style={{
+                background: 'rgba(26, 26, 26, 0.8)',
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                color: '#FFFFFF',
+                borderRadius: '12px',
+                padding: '12px 24px',
+                fontSize: '16px',
+                fontWeight: '500',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(130, 133, 255, 0.1)';
+                e.currentTarget.style.borderColor = 'rgba(130, 133, 255, 0.3)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(26, 26, 26, 0.8)';
+                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+              }}
+            >
+              Browse All Cards
+            </button>
+          </div>
+        )}
       </div>
     </Layout>
   );

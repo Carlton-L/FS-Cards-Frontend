@@ -26,7 +26,6 @@ const SearchBar: React.FC<SearchBarProps> = ({
       onSubmit={handleSubmit}
       style={{
         width: '100%',
-        maxWidth: '500px',
         position: 'relative',
       }}
     >
