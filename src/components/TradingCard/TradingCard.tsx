@@ -381,7 +381,7 @@ const TradingCard: React.FC<TradingCardProps> = ({ card }) => {
             >
               {card.fastUrl && (
                 <a
-                  href={card.fastUrl}
+                  href={`https://futurity.science/subject/${card.id}`}
                   target='_blank'
                   rel='noopener noreferrer'
                   onClick={(e) => e.stopPropagation()}
