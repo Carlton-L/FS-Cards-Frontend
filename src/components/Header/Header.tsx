@@ -95,7 +95,7 @@ const Header: React.FC = () => {
             e.currentTarget.style.transform = 'scale(1)';
           }}
         >
-          <Logo size={128} variant='simple' />
+          <Logo size={128} />
         </div>
 
         {/* Right side - placeholder for balance */}

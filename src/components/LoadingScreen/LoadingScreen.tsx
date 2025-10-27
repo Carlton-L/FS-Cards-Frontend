@@ -65,7 +65,7 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({
             justifyContent: 'center',
           }}
         >
-          <Logo size={80} variant='full' />
+          <Logo size={80} />
         </div>
 
         <div

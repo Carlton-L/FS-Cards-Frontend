@@ -9,7 +9,7 @@ interface LogoProps {
 const Logo: React.FC<LogoProps> = ({ size = 800, onClick }) => {
   return (
     <svg
-      width={800}
+      width={size}
       height='auto'
       style={{
         maxWidth: '100%',

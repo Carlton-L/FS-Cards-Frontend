@@ -6,7 +6,7 @@ import SearchBar from '../../components/SearchBar';
 import Logo from '../../components/Logo';
 
 const HomePage: React.FC = () => {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, _setSearchQuery] = useState('');
   const navigate = useNavigate();
 
   const handleSearch = () => {
@@ -41,7 +41,7 @@ const HomePage: React.FC = () => {
             e.currentTarget.style.transform = 'scale(1)';
           }}
         >
-          <Logo size={120} variant='full' responsive />
+          <Logo size={120} />
         </div>
 
         <p
@@ -69,11 +69,7 @@ const HomePage: React.FC = () => {
             padding: '0 16px',
           }}
         >
-          <SearchBar
-            value={searchQuery}
-            onChange={setSearchQuery}
-            onSubmit={handleSearch}
-          />
+          <SearchBar value={searchQuery} onSubmit={handleSearch} />
         </div>
 
         <div

@@ -146,7 +146,7 @@ const CardPage: React.FC = () => {
             e.currentTarget.style.transform = 'scale(1)';
           }}
         >
-          <Logo size={80} variant='full' responsive />
+          <Logo size={80} />
         </div>
 
         <div
