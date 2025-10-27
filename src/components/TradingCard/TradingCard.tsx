@@ -102,12 +102,15 @@ const TradingCard: React.FC<TradingCardProps> = ({ card }) => {
           width: '100%',
           height: '100%',
           backfaceVisibility: 'hidden',
+          WebkitBackfaceVisibility: 'hidden',
+          MozBackfaceVisibility: 'hidden',
           borderRadius: 'clamp(12px, 3vw, 20px)',
           overflow: 'hidden',
           boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
           border: '2px solid rgba(255, 255, 255, 0.1)',
           display: 'flex',
           flexDirection: 'column',
+          transform: 'rotateY(0deg)',
         }}
       >
         {/* Header gradient */}
@@ -252,13 +255,15 @@ const TradingCard: React.FC<TradingCardProps> = ({ card }) => {
           width: '100%',
           height: '100%',
           backfaceVisibility: 'hidden',
-          transform: 'rotateY(180deg)',
+          WebkitBackfaceVisibility: 'hidden',
+          MozBackfaceVisibility: 'hidden',
           borderRadius: 'clamp(12px, 3vw, 20px)',
           overflow: 'hidden',
           boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
           border: '2px solid rgba(255, 255, 255, 0.1)',
           display: 'flex',
           flexDirection: 'column',
+          transform: 'rotateY(180deg)',
         }}
       >
         {/* Back header */}
