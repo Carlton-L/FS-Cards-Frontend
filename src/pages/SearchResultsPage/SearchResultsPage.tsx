@@ -3,11 +3,15 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import Layout from '../../components/Layout';
 import SearchBar from '../../components/SearchBar';
-import type { SearchBarHandle } from '../../components/SearchBar';
 import SearchResultCard from '../../components/TradingCard/SearchResultCard';
 import { useData } from '../../contexts/DataContext';
 import { searchSubjects } from '../../utils/dataLoader';
 import Logo from '../../components/Logo';
+
+// Define the ref type inline since we're having import issues
+interface SearchBarHandle {
+  getCurrentValue: () => string;
+}
 
 const SearchResultsPage: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -15,7 +19,6 @@ const SearchResultsPage: React.FC = () => {
   const { subjects, labs } = useData();
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
   const [isLoading, setIsLoading] = useState(false);
-
   const [filteredResults, setFilteredResults] = useState<
     Array<{
       id: string;
@@ -24,6 +27,7 @@ const SearchResultsPage: React.FC = () => {
       fastUrl: string;
     }>
   >([]);
+  const searchBarRef = useRef<SearchBarHandle>(null);
 
   useEffect(() => {
     const query = searchParams.get('q') || '';
@@ -59,7 +63,7 @@ const SearchResultsPage: React.FC = () => {
   }, [searchParams, subjects]);
 
   const handleSearch = (query: string) => {
-    setSearchQuery(query); // Update the state
+    setSearchQuery(query);
     if (query.trim()) {
       setIsLoading(true);
       navigate(`/search?q=${encodeURIComponent(query.trim())}`);
@@ -69,9 +73,10 @@ const SearchResultsPage: React.FC = () => {
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleSearch();
+  const handleButtonClick = () => {
+    if (searchBarRef.current) {
+      const currentValue = searchBarRef.current.getCurrentValue();
+      handleSearch(currentValue);
     }
   };
 
@@ -95,30 +100,23 @@ const SearchResultsPage: React.FC = () => {
           boxSizing: 'border-box',
         }}
       >
-        {/* Header */}
         <div
+          onClick={() => navigate('/')}
           style={{
-            textAlign: 'center',
-            marginBottom: '40px',
+            marginBottom: '24px',
+            cursor: 'pointer',
+            transition: 'transform 0.2s ease',
+            display: 'flex',
+            justifyContent: 'center',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'scale(1.05)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'scale(1)';
           }}
         >
-          <div
-            onClick={() => navigate('/')}
-            style={{
-              cursor: 'pointer',
-              transition: 'transform 0.2s ease',
-              display: 'inline-block',
-              maxWidth: '100%',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'scale(1.05)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'scale(1)';
-            }}
-          >
-            <Logo size={800} variant='full' />
-          </div>
+          <Logo size={80} />
         </div>
 
         {/* Search Bar with Button */}
