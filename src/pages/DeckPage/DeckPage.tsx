@@ -77,7 +77,7 @@ const DeckPage: React.FC = () => {
               e.currentTarget.style.transform = 'scale(1)';
             }}
           >
-            <Logo size={80} />
+            <Logo size={800} />
           </div>
 
           <h1

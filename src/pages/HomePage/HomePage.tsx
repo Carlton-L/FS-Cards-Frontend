@@ -41,7 +41,7 @@ const HomePage: React.FC = () => {
             e.currentTarget.style.transform = 'scale(1)';
           }}
         >
-          <Logo size={120} />
+          <Logo size={800} />
         </div>
 
         <p
