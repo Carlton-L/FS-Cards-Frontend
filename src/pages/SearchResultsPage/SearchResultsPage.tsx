@@ -1,8 +1,9 @@
 // src/pages/SearchResultsPage/SearchResultsPage.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import Layout from '../../components/Layout';
 import SearchBar from '../../components/SearchBar';
+import type { SearchBarHandle } from '../../components/SearchBar';
 import SearchResultCard from '../../components/TradingCard/SearchResultCard';
 import { useData } from '../../contexts/DataContext';
 import { searchSubjects } from '../../utils/dataLoader';
@@ -14,6 +15,7 @@ const SearchResultsPage: React.FC = () => {
   const { subjects, labs } = useData();
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
   const [isLoading, setIsLoading] = useState(false);
+
   const [filteredResults, setFilteredResults] = useState<
     Array<{
       id: string;
@@ -56,10 +58,11 @@ const SearchResultsPage: React.FC = () => {
     }, 100);
   }, [searchParams, subjects]);
 
-  const handleSearch = () => {
-    if (searchQuery.trim()) {
+  const handleSearch = (query: string) => {
+    setSearchQuery(query); // Update the state
+    if (query.trim()) {
       setIsLoading(true);
-      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      navigate(`/search?q=${encodeURIComponent(query.trim())}`);
     } else {
       setIsLoading(true);
       navigate('/search');
@@ -131,20 +134,19 @@ const SearchResultsPage: React.FC = () => {
           }}
         >
           <div
-            onKeyPress={handleKeyPress}
             style={{
-              flex: '0 1 auto',
-              maxWidth: '100%',
+              flex: window.innerWidth < 640 ? '1' : '0 1 auto',
+              maxWidth: window.innerWidth < 640 ? '100%' : '500px',
             }}
           >
             <SearchBar
+              ref={searchBarRef}
               value={searchQuery}
-              onChange={setSearchQuery}
               onSubmit={handleSearch}
             />
           </div>
           <button
-            onClick={handleSearch}
+            onClick={handleButtonClick}
             disabled={isLoading}
             style={{
               background: 'linear-gradient(145deg, #8285FF, #0005E9)',
