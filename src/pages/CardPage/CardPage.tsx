@@ -1,19 +1,18 @@
 // src/pages/CardPage/CardPage.tsx
-import React, { useState } from 'react';
+import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Layout from '../../components/Layout';
 import TradingCard from '../../components/TradingCard';
 import { useData } from '../../contexts/DataContext';
+import { useDeckBuilder } from '../../contexts/DeckBuilderContext';
 import { getSubjectBySlug, LAB_CODES } from '../../utils/dataLoader';
 import Logo from '../../components/Logo';
-import PrintModal, { type PrintOptions } from '../../components/PrintModal';
-import { generateCardsPDF } from '../../utils/pdfGenerator';
 
 const CardPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const { subjects } = useData();
-  const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
+  const { addCard, removeCard, hasCard } = useDeckBuilder();
 
   const subject = slug ? getSubjectBySlug(subjects, slug) : undefined;
 
@@ -120,19 +119,18 @@ const CardPage: React.FC = () => {
     wikipediaUrl: subject.wikipediaUrl,
   };
 
-  const handlePrint = async (options: PrintOptions) => {
-    const cardPrintData = {
-      id: subject.fsid,
-      name: subject.name,
-      category: subject.category,
-      summary: subject.summary,
-    };
+  const isInDeck = hasCard(subject.fsid);
 
-    try {
-      await generateCardsPDF([cardPrintData], options);
-    } catch (error) {
-      console.error('Failed to generate PDF:', error);
-      alert('Failed to generate PDF. Please try again.');
+  const handleDeckBuilderToggle = () => {
+    if (isInDeck) {
+      removeCard(subject.fsid);
+    } else {
+      addCard({
+        id: subject.fsid,
+        name: subject.name,
+        category: subject.category,
+        summary: subject.summary,
+      });
     }
   };
 
@@ -180,15 +178,17 @@ const CardPage: React.FC = () => {
         >
           <TradingCard card={cardData} />
 
-          {/* Print Button */}
+          {/* Deck Builder Button */}
           <button
-            onClick={() => setIsPrintModalOpen(true)}
+            onClick={handleDeckBuilderToggle}
             style={{
               padding: '12px 24px',
-              background: 'linear-gradient(145deg, #8285FF, #0005E9)',
-              border: 'none',
+              background: isInDeck
+                ? 'rgba(255, 77, 77, 0.1)'
+                : 'linear-gradient(145deg, #8285FF, #0005E9)',
+              border: isInDeck ? '1px solid rgba(255, 77, 77, 0.3)' : 'none',
               borderRadius: '12px',
-              color: '#FFFFFF',
+              color: isInDeck ? '#FF4D4D' : '#FFFFFF',
               fontSize: 'clamp(14px, 3vw, 16px)',
               fontWeight: 'bold',
               cursor: 'pointer',
@@ -199,24 +199,21 @@ const CardPage: React.FC = () => {
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow =
-                '0 6px 16px rgba(130, 133, 255, 0.4)';
+              e.currentTarget.style.boxShadow = isInDeck
+                ? '0 6px 16px rgba(255, 77, 77, 0.4)'
+                : '0 6px 16px rgba(130, 133, 255, 0.4)';
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.transform = 'translateY(0)';
               e.currentTarget.style.boxShadow = 'none';
             }}
           >
-            🖨️ Print Card
+            {isInDeck ? (
+              <>✓ Remove from Deck Builder</>
+            ) : (
+              <>+ Add to Deck Builder</>
+            )}
           </button>
-
-          {/* Print Modal */}
-          <PrintModal
-            isOpen={isPrintModalOpen}
-            onClose={() => setIsPrintModalOpen(false)}
-            onPrint={handlePrint}
-            cardCount={1}
-          />
 
           {/* Deck Links Below Card */}
           {subject.labs && subject.labs.length > 0 && (
