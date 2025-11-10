@@ -1,16 +1,19 @@
 // src/pages/DeckPage/DeckPage.tsx
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Layout from '../../components/Layout';
 import SearchResultCard from '../../components/TradingCard/SearchResultCard';
 import { useData } from '../../contexts/DataContext';
 import Logo from '../../components/Logo';
 import DeckStack from '../../components/DeckStack';
+import PrintModal, { type PrintOptions } from '../../components/PrintModal';
+import { generateCardsPDF } from '../../utils/pdfGenerator';
 
 const DeckPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { subjects, labs } = useData();
+  const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
 
   const currentLab = useMemo(() => {
     return labs.find((lab) => lab.id === id);
@@ -40,6 +43,23 @@ const DeckPage: React.FC = () => {
     description: subjectData.summary,
     fastUrl: subjectData.fst,
   }));
+
+  const handlePrint = async (options: PrintOptions) => {
+    const cardsData = deckSubjects.map((subject) => ({
+      id: subject.fsid,
+      name: subject.name,
+      category: subject.category,
+      summary: subject.summary,
+    }));
+
+    try {
+      await generateCardsPDF(cardsData, options);
+    } catch (error) {
+      console.error('Failed to generate PDF:', error);
+      alert('Failed to generate PDF. Please try again.');
+    }
+  };
+
   const handleCardClick = (subject: {
     id: string;
     name: string;
@@ -275,7 +295,48 @@ const DeckPage: React.FC = () => {
               {filteredSubjects.length} cards in this deck
             </p>
           </div>
+
+          {/* Print Button */}
+          {filteredSubjects.length > 0 && (
+            <button
+              onClick={() => setIsPrintModalOpen(true)}
+              style={{
+                marginTop: '16px',
+                padding: '12px 24px',
+                background: 'linear-gradient(145deg, #8285FF, #0005E9)',
+                border: 'none',
+                borderRadius: '12px',
+                color: '#FFFFFF',
+                fontSize: 'clamp(14px, 3vw, 16px)',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow =
+                  '0 6px 16px rgba(130, 133, 255, 0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
+            >
+              🖨️ Print Deck
+            </button>
+          )}
         </div>
+
+        {/* Print Modal */}
+        <PrintModal
+          isOpen={isPrintModalOpen}
+          onClose={() => setIsPrintModalOpen(false)}
+          onPrint={handlePrint}
+          cardCount={filteredSubjects.length}
+        />
 
         {/* Cards Grid */}
         {filteredSubjects.length > 0 ? (

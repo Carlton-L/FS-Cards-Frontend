@@ -1,17 +1,18 @@
 // src/pages/HomePage/HomePage.tsx
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../../components/Layout';
 import SearchBar from '../../components/SearchBar';
 import Logo from '../../components/Logo';
 
 const HomePage: React.FC = () => {
-  const [searchQuery, _setSearchQuery] = useState('');
   const navigate = useNavigate();
 
-  const handleSearch = () => {
-    if (searchQuery.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+  const handleSearch = (query: string) => {
+    if (query.trim()) {
+      navigate(`/search?q=${encodeURIComponent(query.trim())}`);
+    } else {
+      navigate('/search');
     }
   };
 
@@ -69,7 +70,7 @@ const HomePage: React.FC = () => {
             padding: '0 16px',
           }}
         >
-          <SearchBar value={searchQuery} onSubmit={handleSearch} />
+          <SearchBar value='' onSubmit={handleSearch} />
         </div>
 
         <div
