@@ -184,6 +184,7 @@ const NodeNetworkBackground: React.FC = () => {
     if (!ctx) return;
 
     // Configuration
+    // eslint-disable-next-line prefer-const
     let config = {
       nodeCount: 120,
       maxDistance: 120,
