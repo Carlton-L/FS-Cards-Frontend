@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { useDeckBuilder } from '../../contexts/DeckBuilderContext';
 import DeckBuilderModal from '../DeckBuilderModal';
+import cardsIcon from '../../assets/cards.svg';
 
 const DeckBuilderButton: React.FC = () => {
   const { cardCount } = useDeckBuilder();
@@ -46,7 +47,11 @@ const DeckBuilderButton: React.FC = () => {
             '0 8px 24px rgba(130, 133, 255, 0.4)';
         }}
       >
-        <span style={{ fontSize: '28px', lineHeight: '1' }}>📚</span>
+        <img
+          src={cardsIcon}
+          alt='Cards'
+          style={{ width: '28px', height: '28px' }}
+        />
         <span
           style={{
             position: 'absolute',

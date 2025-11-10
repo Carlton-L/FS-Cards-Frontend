@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useDeckBuilder } from '../../contexts/DeckBuilderContext';
 import PrintModal, { type PrintOptions } from '../PrintModal';
 import { generateCardsPDF } from '../../utils/pdfGenerator';
+import printIcon from '../../assets/print_icon.svg';
 
 interface DeckBuilderModalProps {
   isOpen: boolean;
@@ -315,6 +316,8 @@ const DeckBuilderModal: React.FC<DeckBuilderModalProps> = ({
                     fontWeight: 'bold',
                     cursor: 'pointer',
                     transition: 'all 0.3s ease',
+                    display: 'flex',
+                    justifyContent: 'center',
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.transform = 'translateY(-2px)';
@@ -326,7 +329,17 @@ const DeckBuilderModal: React.FC<DeckBuilderModalProps> = ({
                     e.currentTarget.style.boxShadow = 'none';
                   }}
                 >
-                  🖨️ Print Custom Deck
+                  <img
+                    src={printIcon}
+                    alt='Print'
+                    style={{
+                      width: '20px',
+                      height: '20px',
+
+                      padding: '0 4px 0 0',
+                    }}
+                  />
+                  Print Custom Deck
                 </button>
               </div>
             </>

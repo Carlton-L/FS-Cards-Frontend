@@ -8,6 +8,7 @@ import Logo from '../../components/Logo';
 import DeckStack from '../../components/DeckStack';
 import PrintModal, { type PrintOptions } from '../../components/PrintModal';
 import { generateCardsPDF } from '../../utils/pdfGenerator';
+import printIcon from '../../assets/print_icon.svg';
 
 const DeckPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -328,7 +329,12 @@ const DeckPage: React.FC = () => {
                 e.currentTarget.style.boxShadow = 'none';
               }}
             >
-              🖨️ Print Deck
+              <img
+                src={printIcon}
+                alt='Print'
+                style={{ width: '20px', height: '20px' }}
+              />
+              Print Deck
             </button>
           )}
         </div>
