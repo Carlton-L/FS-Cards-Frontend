@@ -1,5 +1,6 @@
 // components/PrintModal/PrintModal.tsx
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
+import { calculateBatches, getCardsPerPage } from '../../utils/pdfGenerator';
 
 export interface PrintOptions {
   template: 'avery5371' | 'avery8371' | 'avery5376' | 'apli10609' | 'apli11744';
@@ -10,7 +11,10 @@ export interface PrintOptions {
 interface PrintModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onPrint: (options: PrintOptions) => Promise<void>;
+  onPrint: (
+    options: PrintOptions,
+    onProgress?: (current: number, total: number) => void
+  ) => Promise<void>;
   cardCount: number;
 }
 
@@ -53,19 +57,47 @@ const PrintModal: React.FC<PrintModalProps> = ({
   const [includeCategory, setIncludeCategory] = useState(true);
   const [includeSummary, setIncludeSummary] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [currentBatch, setCurrentBatch] = useState(0);
+  const [totalBatches, setTotalBatches] = useState(0);
+  const [isSuccess, setIsSuccess] = useState(false);
+
+  const batchInfo = useMemo(() => {
+    return calculateBatches(cardCount, selectedTemplate, 10);
+  }, [cardCount, selectedTemplate]);
 
   if (!isOpen) return null;
 
+  const handleClose = () => {
+    setIsSuccess(false);
+    setCurrentBatch(0);
+    setTotalBatches(0);
+    onClose();
+  };
+
   const handlePrint = async () => {
     setIsGenerating(true);
+    setCurrentBatch(0);
+    setTotalBatches(batchInfo.batchCount);
+    setIsSuccess(false);
+
     try {
-      await onPrint({
-        template: selectedTemplate,
-        includeCategory,
-        includeSummary,
-      });
+      await onPrint(
+        {
+          template: selectedTemplate,
+          includeCategory,
+          includeSummary,
+        },
+        (current, total) => {
+          setCurrentBatch(current);
+          setTotalBatches(total);
+        }
+      );
+      // Success! Show success state
+      setIsSuccess(true);
     } catch (error) {
       console.error('Print failed:', error);
+      alert('Failed to generate PDFs. Please try again.');
+      setIsSuccess(false);
     } finally {
       setIsGenerating(false);
     }
@@ -74,7 +106,7 @@ const PrintModal: React.FC<PrintModalProps> = ({
   const selectedTemplateInfo = TEMPLATE_OPTIONS.find(
     (t) => t.value === selectedTemplate
   );
-  const cardsPerSheet = selectedTemplate === 'avery5376' ? 8 : 10;
+  const cardsPerSheet = getCardsPerPage(selectedTemplate);
   const sheetsNeeded = Math.ceil(cardCount / cardsPerSheet);
 
   return (
@@ -92,7 +124,7 @@ const PrintModal: React.FC<PrintModalProps> = ({
         zIndex: 1000,
         padding: '20px',
       }}
-      onClick={onClose}
+      onClick={handleClose}
     >
       <div
         style={{
@@ -127,7 +159,7 @@ const PrintModal: React.FC<PrintModalProps> = ({
             Print Cards
           </h2>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             style={{
               background: 'transparent',
               border: 'none',
@@ -179,129 +211,266 @@ const PrintModal: React.FC<PrintModalProps> = ({
           </p>
         </div>
 
-        {/* Template Selection */}
-        <div style={{ marginBottom: '24px' }}>
-          <label
+        {/* Batch Warning for Large Decks */}
+        {batchInfo.batchCount > 1 && (
+          <div
             style={{
-              display: 'block',
-              fontSize: '14px',
-              fontWeight: 'bold',
-              color: '#FFFFFF',
-              marginBottom: '8px',
+              padding: '16px',
+              background: 'rgba(255, 193, 7, 0.1)',
+              border: '1px solid rgba(255, 193, 7, 0.3)',
+              borderRadius: '12px',
+              marginBottom: '24px',
             }}
           >
-            Card Template
-          </label>
-          <select
-            value={selectedTemplate}
-            onChange={(e) =>
-              setSelectedTemplate(e.target.value as PrintOptions['template'])
-            }
-            style={{
-              width: '100%',
-              padding: '12px',
-              background: 'rgba(26, 26, 26, 0.8)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              borderRadius: '8px',
-              color: '#FFFFFF',
-              fontSize: '14px',
-              cursor: 'pointer',
-            }}
-          >
-            {TEMPLATE_OPTIONS.map((template) => (
-              <option key={template.value} value={template.value}>
-                {template.label}
-              </option>
-            ))}
-          </select>
-          {selectedTemplateInfo && (
+            <p
+              style={{
+                fontSize: '14px',
+                color: '#FFC107',
+                margin: 0,
+                marginBottom: '8px',
+                fontWeight: 'bold',
+              }}
+            >
+              ⚠️ Large Deck - Batch Processing
+            </p>
             <p
               style={{
                 fontSize: '12px',
                 color: '#A7ACB2',
-                marginTop: '8px',
-                marginBottom: 0,
+                margin: 0,
+                lineHeight: '1.5',
               }}
             >
-              {selectedTemplateInfo.description}
+              Your deck will be split into{' '}
+              <strong>{batchInfo.batchCount}</strong> separate PDF files (up to{' '}
+              {batchInfo.cardsPerBatch} cards each) to prevent browser crashes.
+              Each file will download automatically.
             </p>
-          )}
-        </div>
+          </div>
+        )}
 
-        {/* Field Options */}
-        <div style={{ marginBottom: '24px' }}>
-          <label
+        {/* Progress Display */}
+        {isGenerating && totalBatches > 1 && (
+          <div
             style={{
-              display: 'block',
-              fontSize: '14px',
-              fontWeight: 'bold',
-              color: '#FFFFFF',
-              marginBottom: '12px',
+              padding: '16px',
+              background: 'rgba(130, 133, 255, 0.05)',
+              border: '1px solid rgba(130, 133, 255, 0.2)',
+              borderRadius: '12px',
+              marginBottom: '24px',
             }}
           >
-            Include on Cards
-          </label>
-          <div
-            style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}
-          >
-            <label
+            <p
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                cursor: 'pointer',
-                color: '#FFFFFF',
                 fontSize: '14px',
+                color: '#8285FF',
+                margin: 0,
+                marginBottom: '8px',
               }}
             >
-              <input
-                type='checkbox'
-                checked={includeCategory}
-                onChange={(e) => setIncludeCategory(e.target.checked)}
-                style={{
-                  width: '18px',
-                  height: '18px',
-                  cursor: 'pointer',
-                }}
-              />
-              <span>Category</span>
-            </label>
-            <label
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                cursor: 'pointer',
-                color: '#FFFFFF',
-                fontSize: '14px',
-              }}
-            >
-              <input
-                type='checkbox'
-                checked={includeSummary}
-                onChange={(e) => setIncludeSummary(e.target.checked)}
-                style={{
-                  width: '18px',
-                  height: '18px',
-                  cursor: 'pointer',
-                }}
-              />
-              <span>Summary</span>
-            </label>
+              Generating batch {currentBatch} of {totalBatches}...
+            </p>
             <div
               style={{
-                padding: '12px',
-                background: 'rgba(130, 133, 255, 0.05)',
-                borderRadius: '8px',
-                fontSize: '12px',
-                color: '#A7ACB2',
+                width: '100%',
+                height: '8px',
+                background: 'rgba(130, 133, 255, 0.1)',
+                borderRadius: '4px',
+                overflow: 'hidden',
               }}
             >
-              <strong style={{ color: '#8285FF' }}>Note:</strong> QR codes are
-              always included and link to fs.cards/a/[card-id]
+              <div
+                style={{
+                  width: `${(currentBatch / totalBatches) * 100}%`,
+                  height: '100%',
+                  background: 'linear-gradient(90deg, #8285FF, #0005E9)',
+                  transition: 'width 0.3s ease',
+                }}
+              />
             </div>
           </div>
-        </div>
+        )}
+
+        {/* Success State */}
+        {isSuccess && (
+          <div
+            style={{
+              padding: '24px',
+              background: 'rgba(34, 197, 94, 0.1)',
+              border: '1px solid rgba(34, 197, 94, 0.3)',
+              borderRadius: '12px',
+              marginBottom: '24px',
+              textAlign: 'center',
+            }}
+          >
+            <div
+              style={{
+                fontSize: '48px',
+                marginBottom: '16px',
+              }}
+            >
+              ✓
+            </div>
+            <p
+              style={{
+                fontSize: '18px',
+                color: '#22C55E',
+                margin: 0,
+                marginBottom: '8px',
+                fontWeight: 'bold',
+              }}
+            >
+              PDFs Generated Successfully!
+            </p>
+            <p
+              style={{
+                fontSize: '14px',
+                color: '#A7ACB2',
+                margin: 0,
+                lineHeight: '1.5',
+              }}
+            >
+              {totalBatches > 1
+                ? `All ${totalBatches} PDF files have been downloaded to your computer.`
+                : 'Your PDF has been downloaded to your computer.'}
+            </p>
+          </div>
+        )}
+
+        {/* Template Selection - Hide when success */}
+        {!isSuccess && (
+          <>
+            {/* Template Selection */}
+            <div style={{ marginBottom: '24px' }}>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                  color: '#FFFFFF',
+                  marginBottom: '8px',
+                }}
+              >
+                Card Template
+              </label>
+              <select
+                value={selectedTemplate}
+                onChange={(e) =>
+                  setSelectedTemplate(
+                    e.target.value as PrintOptions['template']
+                  )
+                }
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  background: 'rgba(26, 26, 26, 0.8)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '8px',
+                  color: '#FFFFFF',
+                  fontSize: '14px',
+                  cursor: 'pointer',
+                }}
+              >
+                {TEMPLATE_OPTIONS.map((template) => (
+                  <option key={template.value} value={template.value}>
+                    {template.label}
+                  </option>
+                ))}
+              </select>
+              {selectedTemplateInfo && (
+                <p
+                  style={{
+                    fontSize: '12px',
+                    color: '#A7ACB2',
+                    marginTop: '8px',
+                    marginBottom: 0,
+                  }}
+                >
+                  {selectedTemplateInfo.description}
+                </p>
+              )}
+            </div>
+
+            {/* Field Options */}
+            <div style={{ marginBottom: '24px' }}>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                  color: '#FFFFFF',
+                  marginBottom: '12px',
+                }}
+              >
+                Include on Cards
+              </label>
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '12px',
+                }}
+              >
+                <label
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    cursor: 'pointer',
+                    color: '#FFFFFF',
+                    fontSize: '14px',
+                  }}
+                >
+                  <input
+                    type='checkbox'
+                    checked={includeCategory}
+                    onChange={(e) => setIncludeCategory(e.target.checked)}
+                    style={{
+                      width: '18px',
+                      height: '18px',
+                      cursor: 'pointer',
+                    }}
+                  />
+                  <span>Category</span>
+                </label>
+                <label
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    cursor: 'pointer',
+                    color: '#FFFFFF',
+                    fontSize: '14px',
+                  }}
+                >
+                  <input
+                    type='checkbox'
+                    checked={includeSummary}
+                    onChange={(e) => setIncludeSummary(e.target.checked)}
+                    style={{
+                      width: '18px',
+                      height: '18px',
+                      cursor: 'pointer',
+                    }}
+                  />
+                  <span>Summary</span>
+                </label>
+                <div
+                  style={{
+                    padding: '12px',
+                    background: 'rgba(130, 133, 255, 0.05)',
+                    borderRadius: '8px',
+                    fontSize: '12px',
+                    color: '#A7ACB2',
+                  }}
+                >
+                  <strong style={{ color: '#8285FF' }}>Note:</strong> QR codes
+                  are always included and link to fs.cards/a/[card-id]
+                </div>
+              </div>
+            </div>
+          </>
+        )}
 
         {/* Action Buttons */}
         <div
@@ -311,42 +480,72 @@ const PrintModal: React.FC<PrintModalProps> = ({
             justifyContent: 'flex-end',
           }}
         >
-          <button
-            onClick={onClose}
-            disabled={isGenerating}
-            style={{
-              padding: '12px 24px',
-              background: 'rgba(26, 26, 26, 0.8)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              borderRadius: '8px',
-              color: '#FFFFFF',
-              fontSize: '14px',
-              fontWeight: '500',
-              cursor: isGenerating ? 'not-allowed' : 'pointer',
-              opacity: isGenerating ? 0.5 : 1,
-            }}
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handlePrint}
-            disabled={isGenerating}
-            style={{
-              padding: '12px 24px',
-              background: isGenerating
-                ? 'rgba(130, 133, 255, 0.5)'
-                : 'linear-gradient(145deg, #8285FF, #0005E9)',
-              border: 'none',
-              borderRadius: '8px',
-              color: '#FFFFFF',
-              fontSize: '14px',
-              fontWeight: 'bold',
-              cursor: isGenerating ? 'not-allowed' : 'pointer',
-              transition: 'all 0.3s ease',
-            }}
-          >
-            {isGenerating ? 'Generating PDF...' : 'Generate PDF'}
-          </button>
+          {!isSuccess ? (
+            <>
+              <button
+                onClick={handleClose}
+                disabled={isGenerating}
+                style={{
+                  padding: '12px 24px',
+                  background: 'rgba(26, 26, 26, 0.8)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '8px',
+                  color: '#FFFFFF',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: isGenerating ? 'not-allowed' : 'pointer',
+                  opacity: isGenerating ? 0.5 : 1,
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handlePrint}
+                disabled={isGenerating}
+                style={{
+                  padding: '12px 24px',
+                  background: isGenerating
+                    ? 'rgba(130, 133, 255, 0.5)'
+                    : 'linear-gradient(145deg, #8285FF, #0005E9)',
+                  border: 'none',
+                  borderRadius: '8px',
+                  color: '#FFFFFF',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                  cursor: isGenerating ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.3s ease',
+                }}
+              >
+                {isGenerating ? 'Generating PDF...' : 'Generate PDF'}
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={handleClose}
+              style={{
+                padding: '12px 24px',
+                background: 'linear-gradient(145deg, #22C55E, #16A34A)',
+                border: 'none',
+                borderRadius: '8px',
+                color: '#FFFFFF',
+                fontSize: '14px',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow =
+                  '0 6px 16px rgba(34, 197, 94, 0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
+            >
+              Done
+            </button>
+          )}
         </div>
       </div>
     </div>

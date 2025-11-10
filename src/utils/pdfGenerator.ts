@@ -222,29 +222,6 @@ async function generateQRCode(text: string, size: number): Promise<string> {
   }
 }
 
-function truncateText(
-  pdf: jsPDF,
-  text: string,
-  maxWidth: number,
-  fontSize: number
-): string {
-  pdf.setFontSize(fontSize);
-  const words = text.split(' ');
-  let line = '';
-
-  for (const word of words) {
-    const testLine = line + (line ? ' ' : '') + word;
-    const width = pdf.getTextWidth(testLine);
-
-    if (width > maxWidth) {
-      return line + '...';
-    }
-    line = testLine;
-  }
-
-  return line;
-}
-
 function splitTextIntoLines(
   pdf: jsPDF,
   text: string,
@@ -357,9 +334,41 @@ async function drawCard(
   }
 }
 
+export function getCardsPerPage(template: string): number {
+  const templateConfig = TEMPLATES[template];
+  if (!templateConfig) return 10;
+  return templateConfig.columns * templateConfig.rows;
+}
+
+export function calculateBatches(
+  totalCards: number,
+  template: string,
+  pagesPerBatch: number = 20
+): {
+  batchCount: number;
+  cardsPerBatch: number;
+  batches: { start: number; end: number; pages: number }[];
+} {
+  const cardsPerPage = getCardsPerPage(template);
+  const cardsPerBatch = cardsPerPage * pagesPerBatch;
+  const batchCount = Math.ceil(totalCards / cardsPerBatch);
+
+  const batches: { start: number; end: number; pages: number }[] = [];
+
+  for (let i = 0; i < batchCount; i++) {
+    const start = i * cardsPerBatch;
+    const end = Math.min(start + cardsPerBatch, totalCards);
+    const pages = Math.ceil((end - start) / cardsPerPage);
+    batches.push({ start, end, pages });
+  }
+
+  return { batchCount, cardsPerBatch, batches };
+}
+
 export async function generateCardsPDF(
   cards: CardData[],
-  options: PrintOptions
+  options: PrintOptions,
+  onProgress?: (current: number, total: number) => void
 ): Promise<void> {
   const template = TEMPLATES[options.template];
 
@@ -367,14 +376,60 @@ export async function generateCardsPDF(
     throw new Error(`Unknown template: ${options.template}`);
   }
 
+  // For small numbers of cards, generate directly
+  const cardsPerPage = template.columns * template.rows;
+  const totalPages = Math.ceil(cards.length / cardsPerPage);
+
+  if (totalPages <= 20) {
+    await generateSinglePDF(cards, template, options, 1, 1);
+    if (onProgress) onProgress(1, 1);
+    return;
+  }
+
+  // For large numbers, generate in batches of 10 pages
+  const { batches } = calculateBatches(cards.length, options.template, 10);
+
+  for (let i = 0; i < batches.length; i++) {
+    const batch = batches[i];
+    const batchCards = cards.slice(batch.start, batch.end);
+
+    if (onProgress) {
+      onProgress(i + 1, batches.length);
+    }
+
+    await generateSinglePDF(
+      batchCards,
+      template,
+      options,
+      i + 1,
+      batches.length
+    );
+
+    // Small delay between batches to let browser breathe
+    if (i < batches.length - 1) {
+      await new Promise((resolve) => setTimeout(resolve, 500));
+    }
+  }
+
+  if (onProgress) {
+    onProgress(batches.length, batches.length);
+  }
+}
+
+async function generateSinglePDF(
+  cards: CardData[],
+  template: TemplateConfig,
+  options: PrintOptions,
+  batchNumber: number,
+  totalBatches: number
+): Promise<void> {
   // Create PDF in landscape orientation
   const pdf = new jsPDF({
     orientation: 'landscape',
     unit: 'mm',
-    format: [template.pageHeight, template.pageWidth], // [height, width] for landscape
+    format: [template.pageHeight, template.pageWidth],
   });
 
-  const cardsPerPage = template.columns * template.rows;
   let cardIndex = 0;
 
   while (cardIndex < cards.length) {
@@ -396,40 +451,13 @@ export async function generateCardsPDF(
         cardIndex++;
       }
     }
-
-    // Draw perforation grid (optional - for testing)
-    // Uncomment to see alignment grid
-    /*
-    pdf.setDrawColor(0, 102, 255);
-    pdf.setLineDash([1, 1], 0);
-    
-    // Vertical lines
-    for (let i = 0; i <= template.columns; i++) {
-      const x = template.marginLeft + (i * template.cardWidth);
-      pdf.line(
-        x,
-        template.marginTop,
-        x,
-        template.marginTop + (template.rows * template.cardHeight)
-      );
-    }
-    
-    // Horizontal lines
-    for (let i = 0; i <= template.rows; i++) {
-      const y = template.marginTop + (i * template.cardHeight);
-      pdf.line(
-        template.marginLeft,
-        y,
-        template.marginLeft + (template.columns * template.cardWidth),
-        y
-      );
-    }
-    
-    pdf.setLineDash([], 0);
-    */
   }
 
-  // Download the PDF
-  const fileName = `fs-cards-${options.template}-${new Date().getTime()}.pdf`;
+  // Download the PDF with batch number in filename
+  const batchSuffix =
+    totalBatches > 1 ? `-batch${batchNumber}of${totalBatches}` : '';
+  const fileName = `fs-cards-${
+    options.template
+  }${batchSuffix}-${new Date().getTime()}.pdf`;
   pdf.save(fileName);
 }

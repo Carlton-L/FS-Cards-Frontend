@@ -80,6 +80,7 @@ export const DeckBuilderProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useDeckBuilder = () => {
   const context = useContext(DeckBuilderContext);
   if (!context) {

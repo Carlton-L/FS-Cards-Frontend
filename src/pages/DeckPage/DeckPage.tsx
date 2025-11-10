@@ -44,7 +44,10 @@ const DeckPage: React.FC = () => {
     fastUrl: subjectData.fst,
   }));
 
-  const handlePrint = async (options: PrintOptions) => {
+  const handlePrint = async (
+    options: PrintOptions,
+    onProgress?: (current: number, total: number) => void
+  ) => {
     const cardsData = deckSubjects.map((subject) => ({
       id: subject.fsid,
       name: subject.name,
@@ -53,7 +56,7 @@ const DeckPage: React.FC = () => {
     }));
 
     try {
-      await generateCardsPDF(cardsData, options);
+      await generateCardsPDF(cardsData, options, onProgress);
     } catch (error) {
       console.error('Failed to generate PDF:', error);
       alert('Failed to generate PDF. Please try again.');

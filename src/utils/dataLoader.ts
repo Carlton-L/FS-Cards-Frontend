@@ -151,29 +151,35 @@ export const LAB_CODES: {
   },
 };
 
-function parseCSVRow(row: any): SubjectData | null {
-  if (!row.ent_name || !row.ent_summary) {
+function parseCSVRow(row: unknown): SubjectData | null {
+  // Type guard: ensure row is an object
+  if (!row || typeof row !== 'object') {
+    return null;
+  }
+
+  const data = row as Record<string, string>;
+  if (!data.ent_name || !data.ent_summary) {
     return null;
   }
 
   // Parse labs from the labs column
-  const labsString = row.labs || '';
+  const labsString = data.labs || '';
   const labs = labsString
     .split(',')
     .map((lab: string) => lab.trim().toLowerCase())
     .filter((lab: string) => lab.length > 0);
 
   // Parse synonyms
-  const synonymsString = row.synonyms || '';
+  const synonymsString = data.synonyms || '';
   let synonyms: string[] = [];
 
   if (synonymsString.startsWith('[') && synonymsString.endsWith(']')) {
     try {
       synonyms = JSON.parse(synonymsString);
-    } catch (e) {
+    } catch {
       // If parsing fails, try splitting by comma
       synonyms = synonymsString
-        .replace(/[\[\]"]/g, '')
+        .replace(/[[\]"]/g, '')
         .split(',')
         .map((s: string) => s.trim())
         .filter((s: string) => s.length > 0);
@@ -186,26 +192,26 @@ function parseCSVRow(row: any): SubjectData | null {
   }
 
   return {
-    fst: row.FST || '',
-    fsid: row.ent_fsid
-      ? row.ent_fsid.startsWith('fsid_')
-        ? row.ent_fsid.substring(5)
-        : row.ent_fsid
+    fst: data.FST || '',
+    fsid: data.ent_fsid
+      ? data.ent_fsid.startsWith('fsid_')
+        ? data.ent_fsid.substring(5)
+        : data.ent_fsid
       : '',
-    category: (row.category || '').toLowerCase(),
-    name: row.ent_name,
-    summary: row.ent_summary,
-    fsCardUrl: row.fs_card || '',
-    inventor: row.inventor || undefined,
+    category: (data.category || '').toLowerCase(),
+    name: data.ent_name,
+    summary: data.ent_summary,
+    fsCardUrl: data.fs_card || '',
+    inventor: data.inventor || undefined,
     labs,
     synonyms,
     wikipediaDefinition:
-      row.wikipedia_definition && row.wikipedia_definition !== 'nan'
-        ? row.wikipedia_definition
+      data.wikipedia_definition && data.wikipedia_definition !== 'nan'
+        ? data.wikipedia_definition
         : undefined,
     wikipediaUrl:
-      row.wikipedia_url && row.wikipedia_url !== 'wikipedia URL not found'
-        ? row.wikipedia_url
+      data.wikipedia_url && data.wikipedia_url !== 'wikipedia URL not found'
+        ? data.wikipedia_url
         : undefined,
   };
 }
