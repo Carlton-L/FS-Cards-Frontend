@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useDeckBuilder } from '../../contexts/DeckBuilderContext';
 import PrintModal, { type PrintOptions } from '../PrintModal';
 import { generateCardsPDF } from '../../utils/pdfGenerator';
+import { generateStickersPDF } from '../../utils/stickerGenerator';
 import printIcon from '../../assets/print_icon.svg';
 
 interface DeckBuilderModalProps {
@@ -23,7 +24,28 @@ const DeckBuilderModal: React.FC<DeckBuilderModalProps> = ({
 
   const handlePrint = async (options: PrintOptions) => {
     try {
-      await generateCardsPDF(cards, options);
+      if (options.printType === 'stickers') {
+        // For stickers, only pass id and name
+        const stickerCards = cards.map((card) => ({
+          id: card.id,
+          name: card.name,
+        }));
+        await generateStickersPDF(stickerCards, {
+          template: options.template as 'apli10199' | 'averyL4732',
+        });
+      } else {
+        // For cards, use the full card data
+        await generateCardsPDF(cards, {
+          template: options.template as
+            | 'avery5371'
+            | 'avery8371'
+            | 'avery5376'
+            | 'apli10609'
+            | 'apli10608',
+          includeCategory: options.includeCategory,
+          includeSummary: options.includeSummary,
+        });
+      }
     } catch (error) {
       console.error('Failed to generate PDF:', error);
       alert('Failed to generate PDF. Please try again.');

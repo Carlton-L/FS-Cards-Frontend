@@ -1,9 +1,23 @@
 // components/PrintModal/PrintModal.tsx
 import React, { useState, useMemo } from 'react';
 import { calculateBatches, getCardsPerPage } from '../../utils/pdfGenerator';
+import {
+  generateStickersPDF,
+  getStickersPerPage,
+  calculateStickerBatches,
+  type StickerPrintOptions,
+} from '../../utils/stickerGenerator';
 
 export interface PrintOptions {
-  template: 'avery5371' | 'avery8371' | 'avery5376' | 'apli10609' | 'apli11744';
+  printType: 'cards' | 'stickers';
+  template:
+    | 'avery5371'
+    | 'avery8371'
+    | 'avery5376'
+    | 'apli10609'
+    | 'apli10608'
+    | 'apli10199'
+    | 'averyL4732';
   includeCategory: boolean;
   includeSummary: boolean;
 }
@@ -18,7 +32,7 @@ interface PrintModalProps {
   cardCount: number;
 }
 
-const TEMPLATE_OPTIONS = [
+const CARD_TEMPLATE_OPTIONS = [
   {
     value: 'avery5371',
     label: 'Avery 5371 - 2" × 3.5" (10 cards/sheet)',
@@ -40,9 +54,22 @@ const TEMPLATE_OPTIONS = [
     description: 'A4, microperforated',
   },
   {
-    value: 'apli11744',
-    label: 'Apli 11744 - 90 × 50.8mm (10 cards/sheet)',
+    value: 'apli10608',
+    label: 'Apli 10608 - 90 × 50.8mm (10 cards/sheet)',
     description: 'A4, microperforated',
+  },
+];
+
+const STICKER_TEMPLATE_OPTIONS = [
+  {
+    value: 'apli10199',
+    label: 'Apli 10199 - 35.6 × 16.9mm (80 stickers/sheet)',
+    description: 'A4, removable adhesive',
+  },
+  {
+    value: 'averyL4732',
+    label: 'Avery L4732 - 35.6 × 16.9mm (80 stickers/sheet)',
+    description: 'A4, removable adhesive',
   },
 ];
 
@@ -52,6 +79,7 @@ const PrintModal: React.FC<PrintModalProps> = ({
   onPrint,
   cardCount,
 }) => {
+  const [printType, setPrintType] = useState<'cards' | 'stickers'>('cards');
   const [selectedTemplate, setSelectedTemplate] =
     useState<PrintOptions['template']>('avery5371');
   const [includeCategory, setIncludeCategory] = useState(true);
@@ -61,9 +89,25 @@ const PrintModal: React.FC<PrintModalProps> = ({
   const [totalBatches, setTotalBatches] = useState(0);
   const [isSuccess, setIsSuccess] = useState(false);
 
+  // Update template when print type changes
+  React.useEffect(() => {
+    if (printType === 'cards') {
+      setSelectedTemplate('avery5371');
+    } else {
+      setSelectedTemplate('apli10199');
+    }
+  }, [printType]);
+
+  const TEMPLATE_OPTIONS =
+    printType === 'cards' ? CARD_TEMPLATE_OPTIONS : STICKER_TEMPLATE_OPTIONS;
+
   const batchInfo = useMemo(() => {
-    return calculateBatches(cardCount, selectedTemplate, 10);
-  }, [cardCount, selectedTemplate]);
+    if (printType === 'cards') {
+      return calculateBatches(cardCount, selectedTemplate, 10);
+    } else {
+      return calculateStickerBatches(cardCount, selectedTemplate, 10);
+    }
+  }, [cardCount, selectedTemplate, printType]);
 
   if (!isOpen) return null;
 
@@ -83,6 +127,7 @@ const PrintModal: React.FC<PrintModalProps> = ({
     try {
       await onPrint(
         {
+          printType,
           template: selectedTemplate,
           includeCategory,
           includeSummary,
@@ -106,7 +151,10 @@ const PrintModal: React.FC<PrintModalProps> = ({
   const selectedTemplateInfo = TEMPLATE_OPTIONS.find(
     (t) => t.value === selectedTemplate
   );
-  const cardsPerSheet = getCardsPerPage(selectedTemplate);
+  const cardsPerSheet =
+    printType === 'cards'
+      ? getCardsPerPage(selectedTemplate)
+      : getStickersPerPage(selectedTemplate);
   const sheetsNeeded = Math.ceil(cardCount / cardsPerSheet);
 
   return (
@@ -156,7 +204,7 @@ const PrintModal: React.FC<PrintModalProps> = ({
               margin: 0,
             }}
           >
-            Print Cards
+            Print {printType === 'cards' ? 'Cards' : 'Stickers'}
           </h2>
           <button
             onClick={handleClose}
@@ -177,6 +225,98 @@ const PrintModal: React.FC<PrintModalProps> = ({
             ×
           </button>
         </div>
+
+        {/* Print Type Selection */}
+        {!isSuccess && (
+          <div style={{ marginBottom: '24px' }}>
+            <label
+              style={{
+                display: 'block',
+                fontSize: '14px',
+                fontWeight: 'bold',
+                color: '#FFFFFF',
+                marginBottom: '8px',
+              }}
+            >
+              Print Type
+            </label>
+            <div
+              style={{
+                display: 'flex',
+                gap: '12px',
+              }}
+            >
+              <button
+                onClick={() => setPrintType('cards')}
+                disabled={isGenerating}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  background:
+                    printType === 'cards'
+                      ? 'linear-gradient(145deg, #8285FF, #0005E9)'
+                      : 'rgba(26, 26, 26, 0.8)',
+                  border:
+                    printType === 'cards'
+                      ? 'none'
+                      : '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '8px',
+                  color: '#FFFFFF',
+                  fontSize: '14px',
+                  fontWeight: printType === 'cards' ? 'bold' : 'normal',
+                  cursor: isGenerating ? 'not-allowed' : 'pointer',
+                  opacity: isGenerating ? 0.5 : 1,
+                  transition: 'all 0.3s ease',
+                }}
+              >
+                Full Cards
+                <div
+                  style={{
+                    fontSize: '11px',
+                    marginTop: '4px',
+                    opacity: 0.8,
+                  }}
+                >
+                  Title, Category, Summary & QR
+                </div>
+              </button>
+              <button
+                onClick={() => setPrintType('stickers')}
+                disabled={isGenerating}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  background:
+                    printType === 'stickers'
+                      ? 'linear-gradient(145deg, #8285FF, #0005E9)'
+                      : 'rgba(26, 26, 26, 0.8)',
+                  border:
+                    printType === 'stickers'
+                      ? 'none'
+                      : '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '8px',
+                  color: '#FFFFFF',
+                  fontSize: '14px',
+                  fontWeight: printType === 'stickers' ? 'bold' : 'normal',
+                  cursor: isGenerating ? 'not-allowed' : 'pointer',
+                  opacity: isGenerating ? 0.5 : 1,
+                  transition: 'all 0.3s ease',
+                }}
+              >
+                Mini Stickers
+                <div
+                  style={{
+                    fontSize: '11px',
+                    marginTop: '4px',
+                    opacity: 0.8,
+                  }}
+                >
+                  Title & QR Only
+                </div>
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Card Count Info */}
         <div
@@ -351,7 +491,7 @@ const PrintModal: React.FC<PrintModalProps> = ({
                   marginBottom: '8px',
                 }}
               >
-                Card Template
+                {printType === 'cards' ? 'Card' : 'Sticker'} Template
               </label>
               <select
                 value={selectedTemplate}
@@ -391,84 +531,104 @@ const PrintModal: React.FC<PrintModalProps> = ({
               )}
             </div>
 
-            {/* Field Options */}
-            <div style={{ marginBottom: '24px' }}>
-              <label
-                style={{
-                  display: 'block',
-                  fontSize: '14px',
-                  fontWeight: 'bold',
-                  color: '#FFFFFF',
-                  marginBottom: '12px',
-                }}
-              >
-                Include on Cards
-              </label>
-              <div
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '12px',
-                }}
-              >
+            {/* Field Options - Only for cards */}
+            {printType === 'cards' && (
+              <div style={{ marginBottom: '24px' }}>
                 <label
                   style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    cursor: 'pointer',
-                    color: '#FFFFFF',
+                    display: 'block',
                     fontSize: '14px',
+                    fontWeight: 'bold',
+                    color: '#FFFFFF',
+                    marginBottom: '12px',
                   }}
                 >
-                  <input
-                    type='checkbox'
-                    checked={includeCategory}
-                    onChange={(e) => setIncludeCategory(e.target.checked)}
-                    style={{
-                      width: '18px',
-                      height: '18px',
-                      cursor: 'pointer',
-                    }}
-                  />
-                  <span>Category</span>
-                </label>
-                <label
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    cursor: 'pointer',
-                    color: '#FFFFFF',
-                    fontSize: '14px',
-                  }}
-                >
-                  <input
-                    type='checkbox'
-                    checked={includeSummary}
-                    onChange={(e) => setIncludeSummary(e.target.checked)}
-                    style={{
-                      width: '18px',
-                      height: '18px',
-                      cursor: 'pointer',
-                    }}
-                  />
-                  <span>Summary</span>
+                  Include on Cards
                 </label>
                 <div
                   style={{
-                    padding: '12px',
-                    background: 'rgba(130, 133, 255, 0.05)',
-                    borderRadius: '8px',
-                    fontSize: '12px',
-                    color: '#A7ACB2',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '12px',
                   }}
                 >
-                  <strong style={{ color: '#8285FF' }}>Note:</strong> QR codes
-                  are always included and link to fs.cards/a/[card-id]
+                  <label
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      cursor: 'pointer',
+                      color: '#FFFFFF',
+                      fontSize: '14px',
+                    }}
+                  >
+                    <input
+                      type='checkbox'
+                      checked={includeCategory}
+                      onChange={(e) => setIncludeCategory(e.target.checked)}
+                      style={{
+                        width: '18px',
+                        height: '18px',
+                        cursor: 'pointer',
+                      }}
+                    />
+                    <span>Category</span>
+                  </label>
+                  <label
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      cursor: 'pointer',
+                      color: '#FFFFFF',
+                      fontSize: '14px',
+                    }}
+                  >
+                    <input
+                      type='checkbox'
+                      checked={includeSummary}
+                      onChange={(e) => setIncludeSummary(e.target.checked)}
+                      style={{
+                        width: '18px',
+                        height: '18px',
+                        cursor: 'pointer',
+                      }}
+                    />
+                    <span>Summary</span>
+                  </label>
+                  <div
+                    style={{
+                      padding: '12px',
+                      background: 'rgba(130, 133, 255, 0.05)',
+                      borderRadius: '8px',
+                      fontSize: '12px',
+                      color: '#A7ACB2',
+                    }}
+                  >
+                    <strong style={{ color: '#8285FF' }}>Note:</strong> QR codes
+                    are always included and link to fs.cards/a/[card-id]
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
+
+            {/* Info note for stickers */}
+            {printType === 'stickers' && (
+              <div
+                style={{
+                  padding: '12px',
+                  background: 'rgba(130, 133, 255, 0.05)',
+                  borderRadius: '8px',
+                  fontSize: '12px',
+                  color: '#A7ACB2',
+                  marginBottom: '24px',
+                }}
+              >
+                <strong style={{ color: '#8285FF' }}>Note:</strong> Stickers
+                include card title and QR code only. QR codes link to
+                fs.cards/a/[card-id]
+              </div>
+            )}
           </>
         )}
 

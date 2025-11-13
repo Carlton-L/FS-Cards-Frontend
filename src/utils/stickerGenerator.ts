@@ -1,93 +1,59 @@
-// utils/pdfGenerator.ts
+// utils/stickerGenerator.ts
 import jsPDF from 'jspdf';
 import QRCode from 'qrcode';
 import futurityLogo from '../assets/futurity_logo.png';
 
-export interface PrintOptions {
-  template: 'avery5371' | 'avery8371' | 'avery5376' | 'apli10609' | 'apli10608';
-  includeCategory: boolean;
-  includeSummary: boolean;
+export interface StickerPrintOptions {
+  template: 'apli10199' | 'averyL4732';
 }
 
-export interface CardData {
+export interface StickerCardData {
   id: string;
   name: string;
-  category: string;
-  summary: string;
 }
 
-interface TemplateConfig {
+interface StickerTemplateConfig {
   name: string;
   pageWidth: number;
   pageHeight: number;
-  cardWidth: number;
-  cardHeight: number;
+  labelWidth: number;
+  labelHeight: number;
   columns: number;
   rows: number;
   marginLeft: number;
   marginTop: number;
-  unit: 'in' | 'mm';
+  horizontalPitch: number; // Distance between label starts (includes label + gap)
+  verticalPitch: number; // Distance between label starts (includes label + gap)
+  unit: 'mm';
 }
 
-const TEMPLATES: Record<string, TemplateConfig> = {
-  avery5371: {
-    name: 'Avery 5371',
-    pageWidth: 279.4, // 11" in mm
-    pageHeight: 215.9, // 8.5" in mm
-    cardWidth: 50.8, // 2" in mm
-    cardHeight: 88.9, // 3.5" in mm
+const STICKER_TEMPLATES: Record<string, StickerTemplateConfig> = {
+  apli10199: {
+    name: 'Apli 10199',
+    pageWidth: 210, // A4 portrait
+    pageHeight: 297,
+    labelWidth: 35.6,
+    labelHeight: 16.9,
     columns: 5,
-    rows: 2,
-    marginLeft: 19.05, // 0.75" in mm
-    marginTop: 12.7, // 0.5" in mm
+    rows: 16,
+    marginLeft: 11,
+    marginTop: 13,
+    horizontalPitch: 38.1, // 35.6mm label + 2.5mm gap
+    verticalPitch: 16.9, // No gap between rows
     unit: 'mm',
   },
-  avery8371: {
-    name: 'Avery 8371',
-    pageWidth: 279.4,
-    pageHeight: 215.9,
-    cardWidth: 50.8,
-    cardHeight: 88.9,
+  averyL4732: {
+    name: 'Avery L4732',
+    pageWidth: 210, // A4 portrait
+    pageHeight: 297,
+    labelWidth: 35.6,
+    labelHeight: 16.9,
     columns: 5,
-    rows: 2,
-    marginLeft: 19.05,
-    marginTop: 12.7,
-    unit: 'mm',
-  },
-  avery5376: {
-    name: 'Avery 5376',
-    pageWidth: 279.4,
-    pageHeight: 215.9,
-    cardWidth: 59.18, // 2.33" in mm
-    cardHeight: 85.73, // 3.375" in mm
-    columns: 4,
-    rows: 2,
-    marginLeft: 21.2, // calculated: (279.4 - 4*59.18)/2
-    marginTop: 15.87, // calculated: (215.9 - 2*85.73)/2
-    unit: 'mm',
-  },
-  apli10609: {
-    name: 'Apli 10609',
-    pageWidth: 297,
-    pageHeight: 210,
-    cardWidth: 51,
-    cardHeight: 89,
-    columns: 5,
-    rows: 2,
-    marginLeft: 21,
-    marginTop: 16,
-    unit: 'mm',
-  },
-  apli10608: {
-    name: 'Apli 10608',
-    pageWidth: 297,
-    pageHeight: 210,
-    cardWidth: 50.8,
-    cardHeight: 90,
-    columns: 5,
-    rows: 2,
-    marginLeft: 21.5,
-    marginTop: 17, // Adjusted +2mm from original 15mm
+    rows: 16,
+    marginLeft: 11,
+    marginTop: 13,
+    horizontalPitch: 38.1,
+    verticalPitch: 16.9,
     unit: 'mm',
   },
 };
@@ -252,142 +218,113 @@ function splitTextIntoLines(
   return lines;
 }
 
-async function drawCard(
+async function drawSticker(
   pdf: jsPDF,
-  card: CardData,
+  card: StickerCardData,
   x: number,
   y: number,
-  template: TemplateConfig,
-  options: PrintOptions
+  template: StickerTemplateConfig
 ) {
-  const padding = 3; // mm
+  const padding = 1; // mm - smaller padding for tiny stickers
   const contentX = x + padding;
   const contentY = y + padding;
-  const contentWidth = template.cardWidth - padding * 2;
-  const contentHeight = template.cardHeight - padding * 2;
+  const contentWidth = template.labelWidth - padding * 2;
+  const contentHeight = template.labelHeight - padding * 2;
 
-  // QR Code size (50% of card width)
-  const qrSize = template.cardWidth * 0.5;
+  // QR Code size - make it fill most of the height
+  const qrSize = Math.min(contentHeight * 0.9, contentWidth * 0.45);
 
-  // Draw card border (for debugging - remove in production or make it very light)
+  // Draw sticker border for debugging (optional, remove in production)
   // pdf.setDrawColor(200, 200, 200);
-  // pdf.rect(x, y, template.cardWidth, template.cardHeight);
+  // pdf.rect(x, y, template.labelWidth, template.labelHeight);
 
-  let currentY = contentY;
+  // 1. Card Name (bold, small font to fit in tiny space)
+  const maxTitleWidth = contentWidth - qrSize - 2; // Leave space for QR + gap
 
-  // 1. Card Name (bold, 14pt, max 2 lines)
   pdf.setFont('helvetica', 'bold');
-  pdf.setFontSize(14);
-  const nameLines = splitTextIntoLines(pdf, card.name, contentWidth, 14);
-  const displayNameLines = nameLines.slice(0, 2); // Max 2 lines
+  pdf.setFontSize(6); // Very small font for tiny stickers
+
+  const nameLines = splitTextIntoLines(pdf, card.name, maxTitleWidth, 6);
+  const displayNameLines = nameLines.slice(0, 3); // Max 3 lines for tiny sticker
+
+  // Center the text vertically in the available space
+  const lineHeight = 2.2;
+  const totalTextHeight = displayNameLines.length * lineHeight;
+  const textStartY = contentY + (contentHeight - totalTextHeight) / 2;
 
   displayNameLines.forEach((line, idx) => {
-    pdf.text(line, contentX, currentY + idx * 5);
+    pdf.text(line, contentX, textStartY + idx * lineHeight);
   });
-  currentY += displayNameLines.length * 5 + 1;
 
-  // 2. Category (optional, 8pt, uppercase)
-  if (options.includeCategory && card.category) {
-    pdf.setFont('helvetica', 'bold');
-    pdf.setFontSize(8);
-    pdf.setTextColor(100, 100, 100);
-    pdf.text(card.category.toUpperCase(), contentX, currentY);
-    pdf.setTextColor(0, 0, 0);
-    currentY += 4;
-  }
-
-  // 3. Summary (optional, 7pt, fills available space)
-  if (options.includeSummary && card.summary) {
-    // Calculate available height for summary
-    const qrAndMargin = qrSize + 2; // QR size + margin
-    const availableHeight = contentHeight - (currentY - contentY) - qrAndMargin;
-
-    pdf.setFont('helvetica', 'normal');
-    pdf.setFontSize(7); // Reduced from 9 to 7
-    pdf.setTextColor(50, 50, 50);
-
-    const summaryLines = splitTextIntoLines(pdf, card.summary, contentWidth, 7);
-    const lineSpacing = 2.5; // Reduced from 3.5 to 2.5
-    const maxLines = Math.floor(availableHeight / lineSpacing);
-    const displaySummaryLines = summaryLines.slice(0, maxLines);
-
-    displaySummaryLines.forEach((line, idx) => {
-      if (currentY + idx * lineSpacing < y + contentHeight - qrAndMargin) {
-        pdf.text(line, contentX, currentY + idx * lineSpacing);
-      }
-    });
-
-    currentY = y + contentHeight - qrAndMargin;
-    pdf.setTextColor(0, 0, 0);
-  } else {
-    currentY = y + contentHeight - (qrSize + 2);
-  }
-
-  // 4. QR code (bottom right, 50% of card width)
-  const bottomY = y + template.cardHeight - padding - qrSize;
+  // 2. QR code (right side, vertically centered)
+  const qrX = x + template.labelWidth - padding - qrSize;
+  const qrY = y + (template.labelHeight - qrSize) / 2;
   const qrUrl = `https://fs.cards/a/${card.id}`;
   const qrDataUrl = await generateQRCode(qrUrl, Math.floor(qrSize * 10));
 
   if (qrDataUrl) {
-    const qrX = x + template.cardWidth - padding - qrSize;
-    pdf.addImage(qrDataUrl, 'PNG', qrX, bottomY, qrSize, qrSize);
+    pdf.addImage(qrDataUrl, 'PNG', qrX, qrY, qrSize, qrSize);
   }
 }
 
-export function getCardsPerPage(template: string): number {
-  const templateConfig = TEMPLATES[template];
-  if (!templateConfig) return 10;
+export function getStickersPerPage(template: string): number {
+  const templateConfig = STICKER_TEMPLATES[template];
+  if (!templateConfig) return 80;
   return templateConfig.columns * templateConfig.rows;
 }
 
-export function calculateBatches(
-  totalCards: number,
+export function calculateStickerBatches(
+  totalStickers: number,
   template: string,
   pagesPerBatch: number = 20
 ): {
   batchCount: number;
-  cardsPerBatch: number;
+  stickersPerBatch: number;
   batches: { start: number; end: number; pages: number }[];
 } {
-  const cardsPerPage = getCardsPerPage(template);
-  const cardsPerBatch = cardsPerPage * pagesPerBatch;
-  const batchCount = Math.ceil(totalCards / cardsPerBatch);
+  const stickersPerPage = getStickersPerPage(template);
+  const stickersPerBatch = stickersPerPage * pagesPerBatch;
+  const batchCount = Math.ceil(totalStickers / stickersPerBatch);
 
   const batches: { start: number; end: number; pages: number }[] = [];
 
   for (let i = 0; i < batchCount; i++) {
-    const start = i * cardsPerBatch;
-    const end = Math.min(start + cardsPerBatch, totalCards);
-    const pages = Math.ceil((end - start) / cardsPerPage);
+    const start = i * stickersPerBatch;
+    const end = Math.min(start + stickersPerBatch, totalStickers);
+    const pages = Math.ceil((end - start) / stickersPerPage);
     batches.push({ start, end, pages });
   }
 
-  return { batchCount, cardsPerBatch, batches };
+  return { batchCount, stickersPerBatch, batches };
 }
 
-export async function generateCardsPDF(
-  cards: CardData[],
-  options: PrintOptions,
+export async function generateStickersPDF(
+  cards: StickerCardData[],
+  options: StickerPrintOptions,
   onProgress?: (current: number, total: number) => void
 ): Promise<void> {
-  const template = TEMPLATES[options.template];
+  const template = STICKER_TEMPLATES[options.template];
 
   if (!template) {
-    throw new Error(`Unknown template: ${options.template}`);
+    throw new Error(`Unknown sticker template: ${options.template}`);
   }
 
-  // For small numbers of cards, generate directly
-  const cardsPerPage = template.columns * template.rows;
-  const totalPages = Math.ceil(cards.length / cardsPerPage);
+  // For small numbers of stickers, generate directly
+  const stickersPerPage = template.columns * template.rows;
+  const totalPages = Math.ceil(cards.length / stickersPerPage);
 
   if (totalPages <= 20) {
-    await generateSinglePDF(cards, template, options, 1, 1);
+    await generateSingleStickerPDF(cards, template, options, 1, 1);
     if (onProgress) onProgress(1, 1);
     return;
   }
 
-  // For large numbers, generate in batches of 10 pages
-  const { batches } = calculateBatches(cards.length, options.template, 10);
+  // For large numbers, generate in batches of 20 pages
+  const { batches } = calculateStickerBatches(
+    cards.length,
+    options.template,
+    20
+  );
 
   for (let i = 0; i < batches.length; i++) {
     const batch = batches[i];
@@ -397,7 +334,7 @@ export async function generateCardsPDF(
       onProgress(i + 1, batches.length);
     }
 
-    await generateSinglePDF(
+    await generateSingleStickerPDF(
       batchCards,
       template,
       options,
@@ -416,18 +353,18 @@ export async function generateCardsPDF(
   }
 }
 
-async function generateSinglePDF(
-  cards: CardData[],
-  template: TemplateConfig,
-  options: PrintOptions,
+async function generateSingleStickerPDF(
+  cards: StickerCardData[],
+  template: StickerTemplateConfig,
+  options: StickerPrintOptions,
   batchNumber: number,
   totalBatches: number
 ): Promise<void> {
-  // Create PDF in landscape orientation
+  // Create PDF in portrait orientation for stickers
   const pdf = new jsPDF({
-    orientation: 'landscape',
+    orientation: 'portrait',
     unit: 'mm',
-    format: [template.pageHeight, template.pageWidth],
+    format: [template.pageWidth, template.pageHeight],
   });
 
   let cardIndex = 0;
@@ -437,17 +374,17 @@ async function generateSinglePDF(
       pdf.addPage();
     }
 
-    // Draw cards for this page
+    // Draw stickers for this page
     for (let row = 0; row < template.rows && cardIndex < cards.length; row++) {
       for (
         let col = 0;
         col < template.columns && cardIndex < cards.length;
         col++
       ) {
-        const x = template.marginLeft + col * template.cardWidth;
-        const y = template.marginTop + row * template.cardHeight;
+        const x = template.marginLeft + col * template.horizontalPitch;
+        const y = template.marginTop + row * template.verticalPitch;
 
-        await drawCard(pdf, cards[cardIndex], x, y, template, options);
+        await drawSticker(pdf, cards[cardIndex], x, y, template);
         cardIndex++;
       }
     }
@@ -456,7 +393,7 @@ async function generateSinglePDF(
   // Download the PDF with batch number in filename
   const batchSuffix =
     totalBatches > 1 ? `-batch${batchNumber}of${totalBatches}` : '';
-  const fileName = `fs-cards-${
+  const fileName = `fs-stickers-${
     options.template
   }${batchSuffix}-${new Date().getTime()}.pdf`;
   pdf.save(fileName);
