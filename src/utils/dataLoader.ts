@@ -300,25 +300,40 @@ export function searchSubjects(
   );
 }
 
+// Special slug aliases for handling legacy QR codes with different formatting
+const SLUG_ALIASES: { [key: string]: string } = {
+  ecommerce: 'e-commerce',
+};
+
 export function getSubjectBySlug(
   subjects: SubjectData[],
   slug: string
 ): SubjectData | undefined {
-  // First try to match by fsid directly
-  const byFsid = subjects.find((subject) => subject.fsid === slug);
+  // Normalize the slug to lowercase for case-insensitive matching
+  let normalizedSlug = slug.toLowerCase();
+
+  // Check for special aliases (e.g., "ecommerce" -> "e-commerce")
+  if (SLUG_ALIASES[normalizedSlug]) {
+    normalizedSlug = SLUG_ALIASES[normalizedSlug];
+  }
+
+  // First try to match by fsid (case-insensitive)
+  const byFsid = subjects.find(
+    (subject) => subject.fsid.toLowerCase() === normalizedSlug
+  );
   if (byFsid) return byFsid;
 
-  // If not found, try matching by converting the slug back to compare with fsid
+  // If not found, try matching by converting hyphens to underscores
   // (in case the URL encoding changed underscores to hyphens or vice versa)
-  const normalizedSlug = slug.replace(/-/g, '_');
+  const underscoreSlug = normalizedSlug.replace(/-/g, '_');
   const byNormalizedFsid = subjects.find(
-    (subject) => subject.fsid === normalizedSlug
+    (subject) => subject.fsid.toLowerCase() === underscoreSlug
   );
   if (byNormalizedFsid) return byNormalizedFsid;
 
   // Finally, try matching by generating a slug from the name
   return subjects.find((subject) => {
     const nameSlug = subject.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-    return nameSlug === slug;
+    return nameSlug === normalizedSlug;
   });
 }
