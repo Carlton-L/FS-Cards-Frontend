@@ -2,10 +2,8 @@
 import React, { useState, useMemo } from 'react';
 import { calculateBatches, getCardsPerPage } from '../../utils/pdfGenerator';
 import {
-  generateStickersPDF,
   getStickersPerPage,
   calculateStickerBatches,
-  type StickerPrintOptions,
 } from '../../utils/stickerGenerator';
 
 export interface PrintOptions {
@@ -383,7 +381,7 @@ const PrintModal: React.FC<PrintModalProps> = ({
             >
               Your deck will be split into{' '}
               <strong>{batchInfo.batchCount}</strong> separate PDF files (up to{' '}
-              {batchInfo.cardsPerBatch} cards each) to prevent browser crashes.
+              {'cardsPerBatch' in batchInfo ? batchInfo.cardsPerBatch : batchInfo.stickersPerBatch} {printType === 'cards' ? 'cards' : 'stickers'} each) to prevent browser crashes.
               Each file will download automatically.
             </p>
           </div>

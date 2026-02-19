@@ -8,6 +8,7 @@ import Logo from '../../components/Logo';
 import DeckStack from '../../components/DeckStack';
 import PrintModal, { type PrintOptions } from '../../components/PrintModal';
 import { generateCardsPDF } from '../../utils/pdfGenerator';
+import { generateStickersPDF } from '../../utils/stickerGenerator';
 import printIcon from '../../assets/print_icon.svg';
 
 const DeckPage: React.FC = () => {
@@ -57,7 +58,23 @@ const DeckPage: React.FC = () => {
     }));
 
     try {
-      await generateCardsPDF(cardsData, options, onProgress);
+      if (options.printType === 'stickers') {
+        await generateStickersPDF(
+          cardsData.map(({ id, name }) => ({ id, name })),
+          { template: options.template as 'apli10199' | 'averyL4732' },
+          onProgress
+        );
+      } else {
+        await generateCardsPDF(
+          cardsData,
+          {
+            template: options.template as 'avery5371' | 'avery8371' | 'avery5376' | 'apli10609' | 'apli10608',
+            includeCategory: options.includeCategory,
+            includeSummary: options.includeSummary,
+          },
+          onProgress
+        );
+      }
     } catch (error) {
       console.error('Failed to generate PDF:', error);
       alert('Failed to generate PDF. Please try again.');
