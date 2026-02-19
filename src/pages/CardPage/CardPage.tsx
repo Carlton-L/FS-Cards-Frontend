@@ -16,6 +16,14 @@ const CardPage: React.FC = () => {
 
   const subject = slug ? getSubjectBySlug(subjects, slug) : undefined;
 
+  // Redirect to canonical URL if the slug doesn't match
+  // This handles: uppercase letters (edge_AI → edge_ai), aliases (eCommerce → e-commerce)
+  React.useEffect(() => {
+    if (subject && slug && slug !== subject.fsid) {
+      navigate(`/a/${subject.fsid}`, { replace: true });
+    }
+  }, [subject, slug, navigate]);
+
   if (!subject) {
     return (
       <Layout>
